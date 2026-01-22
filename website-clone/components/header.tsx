@@ -21,14 +21,22 @@ export function Header({ biz }: { biz: any }) {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo/Brand Name lấy từ Sheets */}
-          <a href="#home" className="flex flex-col">
-            <span className="text-secondary font-black text-xl md:text-2xl tracking-tighter leading-none uppercase">
-              {biz.name}
-            </span>
-            <span className="text-background/50 text-[10px] tracking-[0.2em] font-light">
-              PREMIUM REAL ESTATE
-            </span>
-          </a>
+         <a href="#home" className="flex flex-col">
+    {/* Tên công ty: To và nổi bật */}
+    <span className="text-secondary font-black text-xl md:text-2xl tracking-tighter leading-none uppercase">
+      {biz.name}
+    </span>
+    
+    {/* Mã tài liệu: Hiển thị ngay dưới tên công ty, màu vàng nhẹ để phân biệt */}
+    <span className="text-secondary/80 text-[11px] font-bold tracking-widest mt-1">
+      {biz.document}
+    </span>
+
+    {/* Slogan/Sub-brand */}
+    <span className="text-background/50 text-[10px] tracking-[0.2em] font-light">
+      PREMIUM REAL ESTATE
+    </span>
+  </a>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
