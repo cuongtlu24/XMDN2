@@ -68,9 +68,12 @@ export function Footer({ biz }: { biz: any }) {
 </div>
 
           {/* Quick Navigation */}
-          <div>
-            <h3 className="text-lg font-bold mb-6 uppercase tracking-wider">Danh mục</h3>
-            <ul className="grid grid-cols-1 gap-3">
+        {/* CỘT 2: DANH MỤC (Căn giữa tuyệt đối) */}
+          <div className="flex flex-col items-center justify-center text-center lg:pt-10">
+            <h3 className="text-2xl font-black mb-8 uppercase tracking-[0.2em] text-secondary">
+              Danh mục
+            </h3>
+            <ul className="space-y-4">
               {[
                 { label: "Trang chủ", href: "#home" },
                 { label: "Tổng quan dự án", href: "#overview" },
@@ -82,9 +85,8 @@ export function Footer({ biz }: { biz: any }) {
                 <li key={link.href}>
                   <a 
                     href={link.href} 
-                    className="text-background/60 hover:text-secondary text-sm transition-all flex items-center gap-2"
+                    className="text-lg font-bold text-background/60 hover:text-secondary transition-all hover:scale-110 block"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-secondary/40" />
                     {link.label}
                   </a>
                 </li>
@@ -92,25 +94,59 @@ export function Footer({ biz }: { biz: any }) {
             </ul>
           </div>
 
-          {/* About & Trust */}
-          <div className="bg-background/5 p-6 rounded-xl border border-background/10">
-            <h3 className="text-lg font-bold mb-4 uppercase tracking-wider">Cam kết dịch vụ</h3>
-            <p className="text-background/60 text-sm leading-relaxed italic mb-4">
-              "{biz.name} tự hào là đơn vị cung cấp các sản phẩm bất động sản vườn sinh thái với pháp lý minh bạch, sổ hồng riêng từng nền, hỗ trợ khách hàng tối đa trong quá trình giao dịch."
-            </p>
-            <div className="pt-4 border-t border-background/10">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-secondary font-bold">
-                Verified Document: {biz.document}
-              </p>
-            </div>
-          </div>
-        </div>
+    {/* About & Trust */}
+<div className="bg-secondary/5 p-8 rounded-3xl border border-secondary/20 shadow-xl relative overflow-hidden">
+  <h3 className="text-xl font-black mb-6 uppercase tracking-[0.2em] text-secondary border-b border-secondary/20 pb-2 inline-block">
+    Cam kết dịch vụ
+  </h3>
+  
+  <p className="text-xl md:text-2xl leading-relaxed font-bold italic mb-8 text-background/90">
+    "{biz.name} tự hào là đơn vị cung cấp các sản phẩm bất động sản vườn sinh thái với pháp lý minh bạch, sổ hồng riêng từng nền, hỗ trợ khách hàng tối đa trong quá trình giao dịch."
+  </p>
 
-        {/* Bottom Bar */}
-        <div className="mt-16 pt-8 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-4 text-background/40 text-[11px] uppercase tracking-widest">
-          <p>© {currentYear} {biz.name}. All rights reserved.</p>
-          <p>Phát triển bởi XMDN Team</p>
-        </div>
+  <div className="pt-6 border-t border-secondary/30">
+    <div className="flex items-center gap-3">
+      {/* Icon Shield để tăng độ uy tín */}
+      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
+        <svg 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          className="w-5 h-5 text-secondary-foreground stroke-[3]"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </div>
+      
+      {/* Verified Document: To, Vàng, Nổi bật */}
+      <p className="text-xl md:text-2xl uppercase tracking-tighter text-secondary font-black">
+        Verified Document: <span className="underline decoration-2 underline-offset-4">{biz.document}</span>
+      </p>
+    </div>
+    
+    <p className="text-[10px] uppercase tracking-[0.3em] text-secondary/50 mt-2 font-bold ml-11">
+      Hệ thống xác thực dữ liệu thời gian thực
+    </p>
+  </div>
+
+  {/* Hiệu ứng trang trí chìm phía sau */}
+  <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-secondary/5 rounded-full blur-3xl" />
+</div>
+
+       {/* Bottom Bar */}
+<div className="mt-20 pt-10 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6 text-background/40 text-[12px] uppercase tracking-[0.2em] font-bold">
+  {/* Bản quyền */}
+  <p>© {currentYear} {biz.name}. All rights reserved.</p>
+  
+  {/* Đơn vị phát triển: Đã thay đổi theo ý bạn */}
+  <p className="flex items-center gap-2">
+    <span>Phát triển bởi</span>
+    <span className="text-secondary/60 hover:text-secondary transition-colors duration-300">
+      {biz.name}
+    </span>
+  </p>
+</div>
+          
       </div>
     </footer>
   )
