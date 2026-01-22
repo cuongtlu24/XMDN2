@@ -13,7 +13,6 @@ import { Footer } from "@/components/footer"
 export default function Home() {
   const [bizData, setBizData] = useState<any>(null);
 
-  // Link CSV từ Google Sheets của bạn
   const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=0&single=true&output=csv";
 
   useEffect(() => {
@@ -22,7 +21,6 @@ export default function Home() {
         const host = window.location.hostname.toLowerCase();
         let sub = host.split(".")[0];
         
-        // Mặc định nếu chạy local hoặc domain chính
         if (sub === "www" || sub === "localhost" || sub === "constructionxuandinh") {
           sub = "hoanghai09"; 
         }
@@ -30,12 +28,13 @@ export default function Home() {
         const res = await fetch(SHEET_URL, { cache: "no-store" });
         const text = await res.text();
         
-        // Parse CSV chuẩn hơn (xử lý dấu ngoặc kép và khoảng trắng)
-        const rows = text.split("\n").map(row => 
-          row.split(",").map(cell => cell.replace(/^"(.*)"$/, '$1').trim())
-        );
+        // SỬA LỖI TẠI ĐÂY: Sử dụng Regex để parse CSV an toàn
+        // Regex này sẽ không tách dấu phẩy nếu nó nằm trong dấu ngoặc kép
+        const rows = text.split("\n").map(row => {
+          const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+          return matches ? matches.map(cell => cell.replace(/^"(.*)"$/, '$1').trim()) : [];
+        });
         
-        // Tìm dòng khớp với Subdomain (Cột A)
         const match = rows.find(r => r[0]?.toLowerCase() === sub);
 
         if (match) {
@@ -43,13 +42,12 @@ export default function Home() {
             subdomain: match[0],
             name: match[1],
             address: match[2],
-            document: match[3],
-            phone: match[4],
-            image: match[5]
+            document: match[3], // Document ID (Cột D)
+            phone: match[4],    // Số điện thoại (Cột E)
+            image: match[5]     // Link Ảnh (Cột F)
           });
         } else {
-          // Nếu không tìm thấy subdomain nào, lấy dòng đầu tiên có dữ liệu (dòng 2 trong sheet)
-          const defaultData = rows[1];
+          const defaultData = rows[1]; // Dòng dữ liệu đầu tiên sau tiêu đề
           if (defaultData) {
             setBizData({
               subdomain: defaultData[0],
@@ -68,7 +66,6 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Màn hình chờ tải dữ liệu (Loading)
   if (!bizData) {
     return (
       <div className="h-screen flex flex-col items-center justify-center bg-[#052c24] text-white">
