@@ -27,16 +27,26 @@ export default function Home() {
           sub = "hoanghai09"; 
         }
 
-        const res = await fetch(SHEET_URL, { cache: "no-store" });
+     const res = await fetch(SHEET_URL, { cache: "no-store" });
         const text = await res.text();
         
-        // SỬA LỖI LỆCH CỘT: Sử dụng Regex để parse CSV an toàn
-        const rows = text.split("\n").map(row => {
-          const matches = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-          return matches ? matches.map(cell => cell.replace(/^"(.*)"$/, '$1').trim()) : [];
+        // CÁCH PARSE CSV AN TOÀN: Tách theo dòng, sau đó tách theo dấu phẩy
+        const rows = text.split(/\r?\n/).map(line => {
+          // Regex này xử lý được cả trường hợp dữ liệu nằm trong dấu ngoặc kép có chứa dấu phẩy
+          const result = [];
+          let cell = "";
+          let inQuotes = false;
+          for (let char of line) {
+            if (char === '"') inQuotes = !inQuotes;
+            else if (char === ',' && !inQuotes) {
+              result.push(cell.trim());
+              cell = "";
+            } else cell += char;
+          }
+          result.push(cell.trim());
+          return result;
         });
         
-        // Tìm dòng khớp với Subdomain (Cột A)
         const match = rows.find(r => r[0]?.toLowerCase() === sub);
 
         if (match) {
