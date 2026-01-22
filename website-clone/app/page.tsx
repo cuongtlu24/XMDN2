@@ -21,14 +21,22 @@ export default function Home() {
       try {
         const host = window.location.hostname.toLowerCase();
         let sub = host.split(".")[0];
-        if (sub === "www" || sub === "localhost") sub = "hoanghai09"; // Mặc định để test
+        
+        // Mặc định nếu chạy local hoặc domain chính
+        if (sub === "www" || sub === "localhost" || sub === "constructionxuandinh") {
+          sub = "hoanghai09"; 
+        }
 
         const res = await fetch(SHEET_URL, { cache: "no-store" });
         const text = await res.text();
-        const rows = text.split("\n").map(row => row.split(","));
+        
+        // Parse CSV chuẩn hơn (xử lý dấu ngoặc kép và khoảng trắng)
+        const rows = text.split("\n").map(row => 
+          row.split(",").map(cell => cell.replace(/^"(.*)"$/, '$1').trim())
+        );
         
         // Tìm dòng khớp với Subdomain (Cột A)
-        const match = rows.find(r => r[0]?.trim().toLowerCase() === sub);
+        const match = rows.find(r => r[0]?.toLowerCase() === sub);
 
         if (match) {
           setBizData({
@@ -39,6 +47,19 @@ export default function Home() {
             phone: match[4],
             image: match[5]
           });
+        } else {
+          // Nếu không tìm thấy subdomain nào, lấy dòng đầu tiên có dữ liệu (dòng 2 trong sheet)
+          const defaultData = rows[1];
+          if (defaultData) {
+            setBizData({
+              subdomain: defaultData[0],
+              name: defaultData[1],
+              address: defaultData[2],
+              document: defaultData[3],
+              phone: defaultData[4],
+              image: defaultData[5]
+            });
+          }
         }
       } catch (e) {
         console.error("Lỗi lấy dữ liệu:", e);
@@ -47,11 +68,18 @@ export default function Home() {
     fetchData();
   }, []);
 
-  if (!bizData) return <div className="h-screen flex items-center justify-center bg-[#052c24] text-white">Đang kết nối dữ liệu...</div>;
+  // Màn hình chờ tải dữ liệu (Loading)
+  if (!bizData) {
+    return (
+      <div className="h-screen flex flex-col items-center justify-center bg-[#052c24] text-white">
+        <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-lg font-medium animate-pulse">Đang kết nối dữ liệu dự án...</p>
+      </div>
+    );
+  }
 
   return (
-    <main>
-      {/* Truyền dữ liệu vào từng Component thông qua thuộc tính (props) */}
+    <main className="overflow-x-hidden">
       <Header biz={bizData} />
       <HeroSection biz={bizData} />
       <InvestmentSection biz={bizData} />
