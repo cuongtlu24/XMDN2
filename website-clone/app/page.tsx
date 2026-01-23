@@ -59,11 +59,12 @@ export default async function Home() {
   let hostRaw = "";
   let host = "";
 
+  
   // ===== LẤY HOST / SUBDOMAIN (CHẠY THEO REQUEST) =====
   try {
-    const h = headers();
-    hostRaw = h.get("x-forwarded-host") || h.get("host") || "";
-    host = hostRaw.split(",")[0].trim().toLowerCase();
+  const h = headers();
+const sub = (h.get("x-subdomain") || "").trim().toLowerCase();
+const hostRaw = h.get("x-host-raw") || "
 
     const parts = host.split(".");
     const first = parts[0] || "";
@@ -139,7 +140,7 @@ export default async function Home() {
 
       {/* ✅ DEBUG ẩn: nếu vẫn rỗng => chắc chắn page chưa chạy dynamic */}
       <div style={{ display: "none" }} aria-hidden="true">
-        DEBUG hostRaw={hostRaw} | host={host} | sub={sub} | firstSlugs={debugFirstSlugs.join(" || ")}
+      DEBUG hostRaw={hostRaw} | sub={sub}
       </div>
 
       <LandingClient bizData={bizData} />
