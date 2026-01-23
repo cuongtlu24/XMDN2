@@ -1,6 +1,5 @@
-// website-clone/app/page.tsx
 import { headers } from "next/headers";
-import LandingClient, { BizData } from "../components/LandingClient";
+import LandingClient, { BizData } from "./LandingClient";
 
 // ===== SLUG chuẩn hoá =====
 function slugify(s: string) {
@@ -26,9 +25,7 @@ function parseCsvLine(line: string): string[] {
       if (inQ && line[i + 1] === '"') {
         cur += '"';
         i++;
-      } else {
-        inQ = !inQ;
-      }
+      } else inQ = !inQ;
       continue;
     }
 
@@ -64,7 +61,6 @@ async function getBizDataFromHost(): Promise<BizData> {
   if (sub === "www") sub = host.split(".")[1] || "";
   const wanted = slugify(sub);
 
-  // Cache nhẹ cho ổn định + nhanh (5 phút)
   const res = await fetch(SHEET_URL, { next: { revalidate: 300 } });
   const text = await res.text();
   const rows = parseCsv(text);
@@ -81,7 +77,6 @@ async function getBizDataFromHost(): Promise<BizData> {
     };
   }
 
-  // Fallback (giữ y như bạn đang dùng)
   return {
     name: "Johnson Marketing LLC",
     address: "123 Wall Street, New York",
@@ -102,12 +97,11 @@ export default async function Page() {
 
   return (
     <>
-      {/* ✅ Mồi cho Facebook crawler: có trong HTML source ngay lập tức */}
+      {/* ✅ Đây là “mồi” để FB đọc được ngay trong View Source */}
       <div style={{ display: "none" }} aria-hidden="true">
         Legal business name: {data.name} | Address: {data.address} | Phone: {data.phone}
       </div>
 
-      {/* ✅ Nếu crawler không chạy JS vẫn thấy */}
       <noscript>
         <div>
           Legal business name: {data.name}
@@ -118,7 +112,6 @@ export default async function Page() {
         </div>
       </noscript>
 
-      {/* UI giữ nguyên */}
       <LandingClient data={data} />
     </>
   );
