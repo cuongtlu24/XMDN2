@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import LandingClient from "./LandingClient";
 
 export const dynamic = "force-dynamic";
@@ -8,39 +7,22 @@ export const fetchCache = "force-no-store";
 const SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?output=csv";
 
-// CSV parse an toàn (xử lý dấu phẩy trong ngoặc kép + "" -> ")
 function parseCsv(text: string) {
-  const lines = (text || "")
-    .replace(/\r/g, "")
-    .split("\n")
-    .filter((l) => l.trim() !== "");
-
+  const lines = (text || "").replace(/\r/g, "").split("\n").filter((l) => l.trim() !== "");
   return lines.map((line) => {
     const result: string[] = [];
     let cell = "";
     let inQuotes = false;
-
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
-
       if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          cell += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
+        if (inQuotes && line[i + 1] === '"') { cell += '"'; i++; }
+        else inQuotes = !inQuotes;
         continue;
       }
-
-      if (ch === "," && !inQuotes) {
-        result.push(cell.trim());
-        cell = "";
-      } else {
-        cell += ch;
-      }
+      if (ch === "," && !inQuotes) { result.push(cell.trim()); cell = ""; }
+      else cell += ch;
     }
-
     result.push(cell.trim());
     return result;
   });
@@ -49,86 +31,26 @@ function parseCsv(text: string) {
 function norm(s: string) {
   return (s || "").replace(/^\ufeff/, "").trim().toLowerCase();
 }
-
 function normalizeSlugCell(cell: string) {
   const v = norm(cell).replace(/^https?:\/\//, "").replace(/^www\./, "");
   return (v.split(".")[0] || "").trim().toLowerCase();
 }
 
-function pickFirstHostValue(v: string) {
-  // x-forwarded-host đôi khi có dạng "a.com, b.com"
-  return (v || "").split(",")[0].trim().toLowerCase();
-}
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
+  const hostRaw =
+    typeof searchParams?.__host === "string" ? searchParams.__host : "";
+  const sub =
+    typeof searchParams?.__sub === "string" ? norm(searchParams.__sub) : "";
 
-function getHostName(hostRaw: string) {
-  const host = pickFirstHostValue(hostRaw);
-  return (host.split(":")[0] || "").trim().toLowerCase(); // bỏ port
-}
+  const DEFAULT_SUB = "";
+  const wanted = sub || DEFAULT_SUB;
 
-function inferSubFromHost(hostname: string) {
-  if (!hostname) return "";
-
-  // bỏ các host không muốn
-  if (
-    hostname === "constructionxuandinh.sbs" ||
-    hostname === "www.constructionxuandinh.sbs" ||
-    hostname.endsWith(".vercel.app") ||
-    hostname === "localhost"
-  ) {
-    return "";
-  }
-
-  const parts = hostname.split(".");
-  if (parts.length >= 3) {
-    const sub = (parts[0] || "").trim().toLowerCase();
-    if (!sub || sub === "www") return "";
-    return sub;
-  }
-  return "";
-}
-
-export default async function Home() {
-  // ===== LẤY SUBDOMAIN TỪ MIDDLEWARE HEADERS =====
-  let sub = "";
-  let hostRaw = "";
-  let hostName = "";
-
-  try {
-    const h = headers();
-
-    // hostRaw: ưu tiên header bạn tự set từ middleware, fallback sang header thật
-    hostRaw =
-      h.get("x-host-raw") ||
-      h.get("x-forwarded-host") ||
-      h.get("host") ||
-      "";
-
-    hostName = getHostName(hostRaw);
-
-    // sub: ưu tiên subdomain middleware set
-    sub = (h.get("x-subdomain") || "").trim().toLowerCase();
-
-    // fallback: nếu middleware chưa set được sub, tự suy từ hostName
-    if (!sub) sub = inferSubFromHost(hostName);
-
-    // ép các case không hợp lệ (thêm lớp an toàn)
-    if (
-      ["www", "localhost", "constructionxuandinh"].includes(sub) ||
-      hostName.endsWith(".vercel.app")
-    ) {
-      sub = "";
-    }
-  } catch (e) {
-    console.error("Header error:", e);
-  }
-
-  // Nếu root domain muốn map mặc định thì set ở đây
-  const DEFAULT_SUB = ""; // ví dụ: "hoanghai09"
-  if (!sub) sub = DEFAULT_SUB;
-
-  // fallback data
   let bizData: any = {
-    subdomain: sub,
+    subdomain: wanted,
     name: "CÔNG TY ĐANG CẬP NHẬT",
     address: "Đang cập nhật địa chỉ...",
     document: "Đang cập nhật...",
@@ -138,7 +60,6 @@ export default async function Home() {
 
   let debugFirstSlugs: string[] = [];
 
-  // ===== FETCH SHEET + MATCH =====
   try {
     const res = await fetch(SHEET_URL, { cache: "no-store" });
     const text = await res.text();
@@ -146,13 +67,11 @@ export default async function Home() {
 
     debugFirstSlugs = rows.slice(0, 8).map((r) => (r?.[0] || "").toString());
 
-    const wanted = norm(sub);
     if (wanted) {
       const match = rows.find((r) => normalizeSlugCell(r?.[0] || "") === wanted);
-
       if (match) {
         bizData = {
-          subdomain: match[0] || sub,
+          subdomain: match[0] || wanted,
           name: match[1] || "N/A",
           address: match[2] || "N/A",
           document: match[3] || "N/A",
@@ -175,8 +94,7 @@ export default async function Home() {
       </div>
 
       <div style={{ display: "none" }} aria-hidden="true">
-        DEBUG hostRaw={hostRaw} | hostName={hostName} | sub={sub} | firstSlugs=
-        {debugFirstSlugs.join(" || ")}
+        DEBUG hostRaw={hostRaw} | sub={wanted} | firstSlugs={debugFirstSlugs.join(" || ")}
       </div>
 
       <LandingClient bizData={bizData} />
