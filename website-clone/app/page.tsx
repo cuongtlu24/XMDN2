@@ -47,10 +47,30 @@ export default async function Home() {
   let sub = "hoanghai09"; // fallback mặc định
 
   try {
-    const host = headers().get("host") || "";
-    const first = (host.split(".")[0] || "").toLowerCase();
+ const h = headers();
 
-    sub = first;
+// ✅ Ưu tiên host thật qua proxy
+const hostRaw =
+  h.get("x-forwarded-host") ||
+  h.get("host") ||
+  "";
+
+// x-forwarded-host đôi khi có dạng: "blueantlerca.constructionxuandinh.sbs, something"
+const host = hostRaw.split(",")[0].trim().toLowerCase();
+
+const first = (host.split(".")[0] || "").toLowerCase();
+sub = first;
+
+// ✅ fallback chỉ khi root/local hoặc đang chạy trên vercel domain
+if (
+  sub === "www" ||
+  sub === "localhost" ||
+  sub === "constructionxuandinh" ||
+  host.endsWith(".vercel.app")
+) {
+  sub = "hoanghai09";
+}
+
 
     // ✅ CHỈ fallback khi thật sự là root/local (KHÔNG dùng host.includes("constructionxuandinh"))
     if (sub === "www" || sub === "localhost" || sub === "constructionxuandinh") {
