@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import LandingClient from "./LandingClient";
 
 const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5dTqFLGiQ/pub?gid=0&single=true&output=csv";
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?output=csv";
 
 // CSV parse an toàn hơn (có xử lý "" trong quotes)
 function parseCsv(text: string) {
