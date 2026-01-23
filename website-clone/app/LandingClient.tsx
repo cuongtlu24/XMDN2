@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Header } from "@/components/header";
 import { HeroSection } from "@/components/hero-section";
 import { InvestmentSection } from "@/components/investment-section";
@@ -11,25 +10,7 @@ import { FeaturesSection } from "@/components/features-section";
 import { ContactSection } from "@/components/contact-section";
 import { Footer } from "@/components/footer";
 
-// Định nghĩa Interface ngay tại đây để tránh lỗi 'any' hoặc thiếu kiểu dữ liệu
-export interface BizData {
-  subdomain: string;
-  name: string;
-  address: string;
-  document: string;
-  phone: string;
-  image: string;
-}
-
-export default function LandingClient({ bizData }: { bizData: BizData }) {
-  
-  useEffect(() => {
-    if (bizData?.name) {
-      document.title = bizData.name;
-    }
-  }, [bizData]);
-
-  // Next.js yêu cầu dữ liệu 'biz' truyền vào các component con phải đồng nhất
+export default function LandingClient({ bizData }: { bizData: any }) {
   return (
     <main className="overflow-x-hidden">
       <Header biz={bizData} />
