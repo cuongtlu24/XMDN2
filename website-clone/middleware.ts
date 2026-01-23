@@ -1,48 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 
-function getSubdomainFromHost(hostRaw: string) {
-  const host = (hostRaw || "").split(",")[0].trim().toLowerCase();
-  if (!host) return "";
+function getSubFromHost(host: string) {
+  const h = (host || "").split(",")[0].trim().toLowerCase().split(":")[0]; // bỏ port + trường hợp "a,b"
+  if (!h) return "";
 
-  // bỏ port
-  const hostname = host.split(":")[0];
+  // bỏ các host không cần
+  if (h === "localhost") return "";
+  if (h.endsWith(".vercel.app")) return "";
 
-  // bỏ các host không muốn
-  if (
-    hostname === "constructionxuandinh.sbs" ||
-    hostname === "www.constructionxuandinh.sbs" ||
-    hostname.endsWith(".vercel.app") ||
-    hostname === "localhost"
-  ) {
-    return "";
-  }
-
-  const parts = hostname.split(".");
+  const parts = h.split(".");
+  // johnson.constructionxuandinh.sbs => ["johnson","constructionxuandinh","sbs"]
   if (parts.length >= 3) {
     const sub = parts[0];
-    if (sub === "www") return "";
-    return sub;
+    if (sub && sub !== "www") return sub;
   }
-
   return "";
 }
 
 export function middleware(req: NextRequest) {
-  const hostRaw =
-    req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const url = req.nextUrl.clone();
 
-  const sub = getSubdomainFromHost(hostRaw);
+  const host =
+    req.headers.get("x-forwarded-host") ||
+    req.headers.get("host") ||
+    "";
 
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-subdomain", sub);
-  requestHeaders.set("x-host-raw", hostRaw);
+  const sub = getSubFromHost(host);
 
-  return NextResponse.next({
-    request: { headers: requestHeaders },
-  });
+  // Inject vào query để page.tsx đọc được chắc chắn
+  if (!url.searchParams.has("__host")) url.searchParams.set("__host", host);
+  if (!url.searchParams.has("__sub")) url.searchParams.set("__sub", sub);
+
+  return NextResponse.rewrite(url);
 }
 
-// chạy cho tất cả routes
+// áp cho tất cả route trừ asset
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
+  matcher: ["/((?!_next|favicon.ico|robots.txt|sitemap.xml|images).*)"],
 };
