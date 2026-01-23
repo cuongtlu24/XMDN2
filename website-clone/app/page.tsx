@@ -1,38 +1,25 @@
 import { headers } from "next/headers";
 import LandingClient from "./LandingClient";
 
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?output=csv";
+// ✅ CẬP NHẬT LINK CHUẨN (Có gid=0 và single=true)
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=0&single=true&output=csv";
 
-// CSV parse an toàn (xử lý dấu phẩy trong ngoặc kép + "" -> ")
 function parseCsv(text: string) {
-  const lines = (text || "").replace(/\r/g, "").split("\n").filter(Boolean);
+  const lines = (text || "").replace(/\r/g, "").split("\n").filter(line => line.trim() !== "");
   return lines.map((line) => {
     const result: string[] = [];
     let cell = "";
     let inQuotes = false;
-
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
-
       if (ch === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          cell += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
+        if (inQuotes && line[i + 1] === '"') { cell += '"'; i++; } 
+        else { inQuotes = !inQuotes; }
         continue;
       }
-
-      if (ch === "," && !inQuotes) {
-        result.push(cell.trim());
-        cell = "";
-      } else {
-        cell += ch;
-      }
+      if (ch === "," && !inQuotes) { result.push(cell.trim()); cell = ""; } 
+      else { cell += ch; }
     }
-
     result.push(cell.trim());
     return result;
   });
@@ -43,96 +30,89 @@ function norm(s: string) {
 }
 
 export default async function Home() {
-  // ✅ Lấy subdomain đúng
-  let sub = "hoanghai09"; // fallback mặc định
+  let sub = "hoanghai09"; 
 
   try {
- const h = headers();
+    const h = headers();
+    // ✅ Lấy host chính xác nhất từ Vercel
+    const hostRaw = h.get("x-forwarded-host") || h.get("host") || "";
+    const host = hostRaw.split(",")[0].trim().toLowerCase();
+    
+    // Tách lấy phần đầu tiên trước dấu chấm
+    const parts = host.split(".");
+    const first = parts[0] || "";
 
-// ✅ Ưu tiên host thật qua proxy
-const hostRaw =
-  h.get("x-forwarded-host") ||
-  h.get("host") ||
-  "";
+    // ✅ LOGIC SUBDOMAIN CHẶT CHẼ
+    if (parts.length >= 3) {
+      // Nếu là sub.domain.com -> lấy sub
+      sub = first;
+    } else {
+      // Nếu là domain.com -> lấy mặc định
+      sub = "hoanghai09";
+    }
 
-// x-forwarded-host đôi khi có dạng: "blueantlerca.constructionxuandinh.sbs, something"
-const host = hostRaw.split(",")[0].trim().toLowerCase();
-
-const first = (host.split(".")[0] || "").toLowerCase();
-sub = first;
-
-// ✅ fallback chỉ khi root/local hoặc đang chạy trên vercel domain
-if (
-  sub === "www" ||
-  sub === "localhost" ||
-  sub === "constructionxuandinh" ||
-  host.endsWith(".vercel.app")
-) {
-  sub = "hoanghai09";
-}
-
-
-    // ✅ CHỈ fallback khi thật sự là root/local (KHÔNG dùng host.includes("constructionxuandinh"))
-    if (sub === "www" || sub === "localhost" || sub === "constructionxuandinh") {
+    // Các trường hợp ép về mặc định
+    if (["www", "localhost", "constructionxuandinh"].includes(sub)) {
       sub = "hoanghai09";
     }
   } catch (e) {
     console.error("Header error:", e);
   }
 
-  // ✅ Fallback data (để không bao giờ crash)
-  let bizData: any = {
-    subdomain: sub,
-    name: "CÔNG TY ĐANG CẬP NHẬT",
-    address: "Đang cập nhật địa chỉ...",
-    document: "Đang cập nhật...",
-    phone: "0000.000.000",
-    image: "",
-  };
+  let bizData: any = null;
 
-  // ✅ Fetch + match sheet
   try {
-    const res = await fetch(SHEET_URL, { next: { revalidate: 300 } });
+    // ✅ Fetch dữ liệu mới nhất (không cache quá lâu để test cho chuẩn)
+    const res = await fetch(SHEET_URL, { next: { revalidate: 0 } });
     const text = await res.text();
     const rows = parseCsv(text);
-
     const wanted = norm(sub);
 
-    // ✅ match mềm: trim + lowercase + bỏ BOM
+    // ✅ Tìm kiếm khớp subdomain
     const match = rows.find((r) => norm(r?.[0] || "") === wanted);
 
     if (match) {
       bizData = {
-        subdomain: match[0] || sub,
-        name: match[1] || "N/A",
-        address: match[2] || "N/A",
-        document: match[3] || "N/A",
-        phone: match[4] || "N/A",
+        subdomain: match[0],
+        name: match[1],
+        address: match[2],
+        document: match[3],
+        phone: match[4],
         image: match[5] || "",
       };
+    } else {
+      // Nếu ko khớp sub cụ thể, lấy dòng 2 (index 1) làm mặc định thay vì gán cứng
+      const defaultRow = rows[1];
+      if (defaultRow) {
+        bizData = {
+          subdomain: sub,
+          name: defaultRow[1],
+          address: defaultRow[2],
+          document: defaultRow[3],
+          phone: defaultRow[4],
+          image: defaultRow[5] || "",
+        };
+      }
     }
   } catch (e) {
     console.error("Fetch error:", e);
   }
 
+  // Fallback cuối cùng nếu lỗi mạng/sheet
+  if (!bizData) {
+    bizData = { subdomain: sub, name: "CÔNG TY ĐANG CẬP NHẬT", address: "Vui lòng kiểm tra Sheet", document: "N/A", phone: "000", image: "" };
+  }
+
   return (
     <>
-      {/* ✅ FB crawler đọc được ngay trong View Source */}
+      {/* Cấu trúc này giúp Bot Facebook đọc được ngay dữ liệu pháp lý */}
       <div style={{ display: "none" }} aria-hidden="true">
-        Legal business name: {bizData.name} | Address: {bizData.address} | Phone: {bizData.phone}
+        <h1>{bizData.name}</h1>
+        <p>Address: {bizData.address}</p>
+        <p>Tax/Document: {bizData.document}</p>
+        <p>Phone: {bizData.phone}</p>
       </div>
 
-      <noscript>
-        <div>
-          Legal business name: {bizData.name}
-          <br />
-          Address: {bizData.address}
-          <br />
-          Phone: {bizData.phone}
-        </div>
-      </noscript>
-
-      {/* UI chạy client cho an toàn */}
       <LandingClient bizData={bizData} />
     </>
   );
