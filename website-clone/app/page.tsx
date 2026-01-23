@@ -1,9 +1,15 @@
 import { headers } from "next/headers";
 import LandingClient from "./LandingClient";
 
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=0&single=true&output=csv";
+// ✅ ÉP CHẠY THEO REQUEST (để headers().get("host") có giá trị)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?output=csv";
+
+// CSV parse an toàn (xử lý dấu phẩy trong ngoặc kép + "" -> ")
 function parseCsv(text: string) {
   const lines = (text || "").replace(/\r/g, "").split("\n").filter((l) => l.trim() !== "");
   return lines.map((line) => {
@@ -13,6 +19,7 @@ function parseCsv(text: string) {
 
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
+
       if (ch === '"') {
         if (inQuotes && line[i + 1] === '"') {
           cell += '"';
@@ -22,6 +29,7 @@ function parseCsv(text: string) {
         }
         continue;
       }
+
       if (ch === "," && !inQuotes) {
         result.push(cell.trim());
         cell = "";
@@ -29,6 +37,7 @@ function parseCsv(text: string) {
         cell += ch;
       }
     }
+
     result.push(cell.trim());
     return result;
   });
@@ -38,19 +47,19 @@ function norm(s: string) {
   return (s || "").replace(/^\ufeff/, "").trim().toLowerCase();
 }
 
-// ✅ Cột A có thể là slug / domain / url → normalize về slug
 function normalizeSlugCell(cell: string) {
-  const v = norm(cell)
-    .replace(/^https?:\/\//, "")
-    .replace(/^www\./, "");
+  const v = norm(cell).replace(/^https?:\/\//, "").replace(/^www\./, "");
   return (v.split(".")[0] || "").trim().toLowerCase();
 }
 
 export default async function Home() {
-  let sub = "hoanghai09";
+  // ❌ KHÔNG gán hoanghai09 ngay từ đầu nữa
+  // ✅ mặc định rỗng để dễ phát hiện sai host
+  let sub = "";
   let hostRaw = "";
   let host = "";
 
+  // ===== LẤY HOST / SUBDOMAIN (CHẠY THEO REQUEST) =====
   try {
     const h = headers();
     hostRaw = h.get("x-forwarded-host") || h.get("host") || "";
@@ -61,16 +70,24 @@ export default async function Home() {
 
     // sub.domain.com => lấy sub
     if (parts.length >= 3) sub = first;
-    else sub = "hoanghai09";
+    else sub = ""; // root domain thì để rỗng (hoặc bạn muốn map default gì thì set ở dưới)
 
+    // ép các case không hợp lệ
     if (["www", "localhost", "constructionxuandinh"].includes(sub) || host.endsWith(".vercel.app")) {
-      sub = "hoanghai09";
+      sub = "";
     }
   } catch (e) {
     console.error("Header error:", e);
   }
 
-  // ✅ Fallback đúng: không match thì HIỂN THỊ “ĐANG CẬP NHẬT” (không nhảy qua Hoàng Hải)
+  // ✅ Nếu là root domain thì bạn muốn hiển thị dòng nào?
+  // Nếu bạn muốn root domain hiển thị 1 công ty mặc định thì set ở đây.
+  // Nếu KHÔNG muốn default, cứ để "" và nó sẽ hiển thị “ĐANG CẬP NHẬT”.
+  const DEFAULT_SUB = ""; // ví dụ nếu muốn: "hoanghai09"
+
+  if (!sub) sub = DEFAULT_SUB;
+
+  // fallback data
   let bizData: any = {
     subdomain: sub,
     name: "CÔNG TY ĐANG CẬP NHẬT",
@@ -80,29 +97,31 @@ export default async function Home() {
     image: "",
   };
 
-  // để debug
   let debugFirstSlugs: string[] = [];
 
+  // ===== FETCH SHEET + MATCH =====
   try {
     const res = await fetch(SHEET_URL, { cache: "no-store" });
     const text = await res.text();
     const rows = parseCsv(text);
 
+    debugFirstSlugs = rows.slice(0, 8).map((r) => (r?.[0] || "").toString());
+
     const wanted = norm(sub);
 
-    debugFirstSlugs = rows.slice(0, 6).map((r) => (r?.[0] || "").toString());
+    if (wanted) {
+      const match = rows.find((r) => normalizeSlugCell(r?.[0] || "") === wanted);
 
-    const match = rows.find((r) => normalizeSlugCell(r?.[0] || "") === wanted);
-
-    if (match) {
-      bizData = {
-        subdomain: match[0] || sub,
-        name: match[1] || "N/A",
-        address: match[2] || "N/A",
-        document: match[3] || "N/A",
-        phone: match[4] || "N/A",
-        image: match[5] || "",
-      };
+      if (match) {
+        bizData = {
+          subdomain: match[0] || sub,
+          name: match[1] || "N/A",
+          address: match[2] || "N/A",
+          document: match[3] || "N/A",
+          phone: match[4] || "N/A",
+          image: match[5] || "",
+        };
+      }
     }
   } catch (e) {
     console.error("Fetch error:", e);
@@ -110,12 +129,15 @@ export default async function Home() {
 
   return (
     <>
-      {/* ✅ FB crawler đọc được ngay */}
+      {/* ✅ FB crawler đọc được ngay trong View Source */}
       <div style={{ display: "none" }} aria-hidden="true">
-        Legal business name: {bizData.name} | Address: {bizData.address} | Phone: {bizData.phone}
+        <h1>{bizData.name}</h1>
+        <p>Address: {bizData.address}</p>
+        <p>Tax/Document: {bizData.document}</p>
+        <p>Phone: {bizData.phone}</p>
       </div>
 
-      {/* ✅ DEBUG ẩn: xem host/sub + vài giá trị cột A để biết vì sao không match */}
+      {/* ✅ DEBUG ẩn: nếu vẫn rỗng => chắc chắn page chưa chạy dynamic */}
       <div style={{ display: "none" }} aria-hidden="true">
         DEBUG hostRaw={hostRaw} | host={host} | sub={sub} | firstSlugs={debugFirstSlugs.join(" || ")}
       </div>
