@@ -55,15 +55,69 @@ function normalizeSlugCell(cell: string) {
   return (v.split(".")[0] || "").trim().toLowerCase();
 }
 
+function pickFirstHostValue(v: string) {
+  // x-forwarded-host đôi khi có dạng "a.com, b.com"
+  return (v || "").split(",")[0].trim().toLowerCase();
+}
+
+function getHostName(hostRaw: string) {
+  const host = pickFirstHostValue(hostRaw);
+  return (host.split(":")[0] || "").trim().toLowerCase(); // bỏ port
+}
+
+function inferSubFromHost(hostname: string) {
+  if (!hostname) return "";
+
+  // bỏ các host không muốn
+  if (
+    hostname === "constructionxuandinh.sbs" ||
+    hostname === "www.constructionxuandinh.sbs" ||
+    hostname.endsWith(".vercel.app") ||
+    hostname === "localhost"
+  ) {
+    return "";
+  }
+
+  const parts = hostname.split(".");
+  if (parts.length >= 3) {
+    const sub = (parts[0] || "").trim().toLowerCase();
+    if (!sub || sub === "www") return "";
+    return sub;
+  }
+  return "";
+}
+
 export default async function Home() {
   // ===== LẤY SUBDOMAIN TỪ MIDDLEWARE HEADERS =====
   let sub = "";
   let hostRaw = "";
+  let hostName = "";
 
   try {
     const h = headers();
+
+    // hostRaw: ưu tiên header bạn tự set từ middleware, fallback sang header thật
+    hostRaw =
+      h.get("x-host-raw") ||
+      h.get("x-forwarded-host") ||
+      h.get("host") ||
+      "";
+
+    hostName = getHostName(hostRaw);
+
+    // sub: ưu tiên subdomain middleware set
     sub = (h.get("x-subdomain") || "").trim().toLowerCase();
-    hostRaw = h.get("x-host-raw") || "";
+
+    // fallback: nếu middleware chưa set được sub, tự suy từ hostName
+    if (!sub) sub = inferSubFromHost(hostName);
+
+    // ép các case không hợp lệ (thêm lớp an toàn)
+    if (
+      ["www", "localhost", "constructionxuandinh"].includes(sub) ||
+      hostName.endsWith(".vercel.app")
+    ) {
+      sub = "";
+    }
   } catch (e) {
     console.error("Header error:", e);
   }
@@ -121,7 +175,8 @@ export default async function Home() {
       </div>
 
       <div style={{ display: "none" }} aria-hidden="true">
-        DEBUG hostRaw={hostRaw} | sub={sub} | firstSlugs={debugFirstSlugs.join(" || ")}
+        DEBUG hostRaw={hostRaw} | hostName={hostName} | sub={sub} | firstSlugs=
+        {debugFirstSlugs.join(" || ")}
       </div>
 
       <LandingClient bizData={bizData} />
