@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { Header } from "@/components/header";
 import { HeroSection } from "@/components/hero-section";
 import { InvestmentSection } from "@/components/investment-section";
@@ -12,14 +11,6 @@ import { ContactSection } from "@/components/contact-section";
 import { Footer } from "@/components/footer";
 
 export default function LandingClient({ bizData }: { bizData: any }) {
-  
-  // Cập nhật title khi trang đã load xong ở client
-  useEffect(() => {
-    if (bizData?.name) {
-      document.title = bizData.name;
-    }
-  }, [bizData]);
-
   return (
     <main className="overflow-x-hidden">
       <Header biz={bizData} />
