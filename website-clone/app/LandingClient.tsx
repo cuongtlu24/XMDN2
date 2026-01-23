@@ -12,7 +12,8 @@ import { ContactSection } from "@/components/contact-section";
 import { Footer } from "@/components/footer";
 
 export default function LandingClient({ bizData }: { bizData: any }) {
-  // Cập nhật Title trình duyệt cho người dùng
+  
+  // Cập nhật title khi trang đã load xong ở client
   useEffect(() => {
     if (bizData?.name) {
       document.title = bizData.name;
