@@ -1,160 +1,69 @@
 import { headers } from "next/headers";
+import LandingClient from "./LandingClient";
 
-import { Header } from "@/components/header";
-import { HeroSection } from "@/components/hero-section";
-import { InvestmentSection } from "@/components/investment-section";
-import { AmenitiesSection } from "@/components/amenities-section";
-import { PotentialSection } from "@/components/potential-section";
-import { LegalSection } from "@/components/legal-section";
-import { FeaturesSection } from "@/components/features-section";
-import { ContactSection } from "@/components/contact-section";
-import { Footer } from "@/components/footer";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=0&single=true&output=csv";
 
-type BizData = {
-  subdomain: string;
-  name: string;
-  address: string;
-  document: string;
-  phone: string;
-  image?: string;
-};
-
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5dTqFLGiQ/pub?gid=0&single=true&output=csv";
-
-// ===== CSV parser an toàn (xử lý dấu phẩy trong ngoặc kép) =====
-function parseCsv(text: string): string[][] {
-  const lines = (text || "").replace(/\r/g, "").split("\n").filter(Boolean);
-  return lines.map((line) => {
-    const result: string[] = [];
+function parseCsv(text: string) {
+  return text.split(/\r?\n/).map(line => {
+    const result = [];
     let cell = "";
     let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        // xử lý "" -> "
-        if (inQuotes && line[i + 1] === '"') {
-          cell += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-        continue;
-      }
-
-      if (ch === "," && !inQuotes) {
+    for (let char of line) {
+      if (char === '"') inQuotes = !inQuotes;
+      else if (char === ',' && !inQuotes) {
         result.push(cell.trim());
         cell = "";
-      } else {
-        cell += ch;
-      }
+      } else cell += char;
     }
     result.push(cell.trim());
     return result;
   });
 }
 
-function normalizeSub(s: string) {
-  return (s || "").trim().toLowerCase();
-}
-
-function getSubdomainFromHost(host: string) {
-  const h = (host || "").toLowerCase().split(":")[0]; // bỏ port
-  const parts = h.split(".").filter(Boolean);
-  if (parts.length < 2) return "";
-
-  let sub = parts[0];
-  if (sub === "www") sub = parts[1] || "";
-  return sub;
-}
-
-async function getBizDataServer(): Promise<BizData> {
-  const host = headers().get("host") || "";
-  let sub = getSubdomainFromHost(host);
-
-  // fallback cho local / domain không có sub
-  if (!sub || sub === "localhost" || sub === "constructionxuandinh") {
-    sub = "hoanghai09";
+export default async function Home() {
+  let sub = "hoanghai09"; // Mặc định
+  
+  try {
+    const headerList = headers();
+    const host = headerList.get("host") || "";
+    sub = host.split(".")[0].toLowerCase();
+    
+    if (sub === "www" || sub === "localhost" || sub.includes("constructionxuandinh")) {
+      sub = "hoanghai09"; 
+    }
+  } catch (e) {
+    console.error("Header error:", e);
   }
+
+  let bizData = {
+    subdomain: sub,
+    name: "CÔNG TY ĐANG CẬP NHẬT",
+    address: "Đang cập nhật địa chỉ...",
+    document: "Đang cập nhật...",
+    phone: "0000.000.000",
+    image: ""
+  };
 
   try {
-    const res = await fetch(SHEET_URL, { next: { revalidate: 300 } });
-    if (!res.ok) {
-      console.error("[CSV] fetch failed:", res.status, res.statusText);
-      return {
-        subdomain: sub,
-        name: "Business",
-        address: "",
-        document: "",
-        phone: "",
-      };
-    }
-
+    const res = await fetch(SHEET_URL, { cache: "no-store" });
     const text = await res.text();
     const rows = parseCsv(text);
+    const match = rows.find(r => r[0]?.toLowerCase() === sub);
 
-    const wanted = normalizeSub(sub);
-
-    const match = rows.find((r) => normalizeSub(r?.[0] || "") === wanted);
-
-    const row = match || rows.find((r) => (r?.[0] || "").trim().length > 0) || [];
-
-    return {
-      subdomain: row[0] || sub,
-      name: row[1] || "Business",
-      address: row[2] || "",
-      document: row[3] || "",
-      phone: row[4] || "",
-      image: row[5] || "",
-    };
-  } catch (e: any) {
-    console.error("[getBizDataServer] error:", e?.message || e);
-    return {
-      subdomain: sub,
-      name: "Business",
-      address: "",
-      document: "",
-      phone: "",
-    };
+    if (match) {
+      bizData = {
+        subdomain: match[0] || sub,
+        name: match[1] || "N/A",
+        address: match[2] || "N/A",
+        document: match[3] || "N/A",
+        phone: match[4] || "N/A",
+        image: match[5] || ""
+      };
+    }
+  } catch (e) {
+    console.error("Fetch error:", e);
   }
-}
 
-export async function generateMetadata() {
-  const biz = await getBizDataServer();
-  return { title: biz.name || "Business" };
-}
-
-export default async function Home() {
-  const bizData = await getBizDataServer();
-
-  return (
-    <main className="overflow-x-hidden">
-      {/* ✅ QUAN TRỌNG: FB crawler sẽ thấy trong HTML source */}
-      <div style={{ display: "none" }} aria-hidden="true">
-        Legal business name: {bizData.name} | Address: {bizData.address} | Phone: {bizData.phone}
-      </div>
-
-      <noscript>
-        <div>
-          Legal business name: {bizData.name}
-          <br />
-          Address: {bizData.address}
-          <br />
-          Phone: {bizData.phone}
-        </div>
-      </noscript>
-
-      {/* ✅ GIỮ NGUYÊN TOÀN BỘ COMPONENT CỦA BẠN */}
-      <Header biz={bizData} />
-      <HeroSection biz={bizData} />
-      <InvestmentSection biz={bizData} />
-      <AmenitiesSection biz={bizData} />
-      <PotentialSection biz={bizData} />
-      <LegalSection biz={bizData} />
-      <FeaturesSection biz={bizData} />
-      <ContactSection biz={bizData} />
-      <Footer biz={bizData} />
-    </main>
-  );
+  // Truyền bizData xuống LandingClient để render phía client an toàn
+  return <LandingClient bizData={bizData} />;
 }
