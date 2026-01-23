@@ -4,7 +4,7 @@ import LandingClient from "./LandingClient";
 const SHEET_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?output=csv";
 
-// CSV parse an toàn hơn (có xử lý "" trong quotes)
+// CSV parse an toàn (xử lý dấu phẩy trong ngoặc kép + "" -> ")
 function parseCsv(text: string) {
   const lines = (text || "").replace(/\r/g, "").split("\n").filter(Boolean);
   return lines.map((line) => {
@@ -39,24 +39,28 @@ function parseCsv(text: string) {
 }
 
 function norm(s: string) {
-  return (s || "").trim().toLowerCase();
+  return (s || "").replace(/^\ufeff/, "").trim().toLowerCase();
 }
 
 export default async function Home() {
-  // 1) Lấy subdomain an toàn
-  let sub = "hoanghai09";
+  // ✅ Lấy subdomain đúng
+  let sub = "hoanghai09"; // fallback mặc định
+
   try {
     const host = headers().get("host") || "";
-    sub = (host.split(".")[0] || "").toLowerCase();
+    const first = (host.split(".")[0] || "").toLowerCase();
 
-    if (sub === "www" || sub === "localhost" || host.includes("constructionxuandinh")) {
+    sub = first;
+
+    // ✅ CHỈ fallback khi thật sự là root/local (KHÔNG dùng host.includes("constructionxuandinh"))
+    if (sub === "www" || sub === "localhost" || sub === "constructionxuandinh") {
       sub = "hoanghai09";
     }
   } catch (e) {
     console.error("Header error:", e);
   }
 
-  // 2) Fallback data (không bao giờ crash)
+  // ✅ Fallback data (để không bao giờ crash)
   let bizData: any = {
     subdomain: sub,
     name: "CÔNG TY ĐANG CẬP NHẬT",
@@ -66,13 +70,16 @@ export default async function Home() {
     image: "",
   };
 
-  // 3) Fetch sheet ở SERVER
+  // ✅ Fetch + match sheet
   try {
-    const res = await fetch(SHEET_URL, { next: { revalidate: 300 } }); // cache 5 phút cho ổn định
+    const res = await fetch(SHEET_URL, { next: { revalidate: 300 } });
     const text = await res.text();
     const rows = parseCsv(text);
 
-    const match = rows.find((r) => norm(r?.[0]) === norm(sub));
+    const wanted = norm(sub);
+
+    // ✅ match mềm: trim + lowercase + bỏ BOM
+    const match = rows.find((r) => norm(r?.[0] || "") === wanted);
 
     if (match) {
       bizData = {
@@ -90,12 +97,11 @@ export default async function Home() {
 
   return (
     <>
-      {/* ✅ QUAN TRỌNG: FB đọc được ngay trong HTML source */}
+      {/* ✅ FB crawler đọc được ngay trong View Source */}
       <div style={{ display: "none" }} aria-hidden="true">
         Legal business name: {bizData.name} | Address: {bizData.address} | Phone: {bizData.phone}
       </div>
 
-      {/* ✅ Nếu crawler không chạy JS vẫn thấy */}
       <noscript>
         <div>
           Legal business name: {bizData.name}
@@ -106,7 +112,7 @@ export default async function Home() {
         </div>
       </noscript>
 
-      {/* UI chạy client để tránh server exception */}
+      {/* UI chạy client cho an toàn */}
       <LandingClient bizData={bizData} />
     </>
   );
