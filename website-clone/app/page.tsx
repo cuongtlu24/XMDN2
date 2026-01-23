@@ -21,42 +21,38 @@ function parseCsv(text: string) {
 }
 
 export default async function Home() {
-  let sub = "hoanghai09"; // Mặc định nếu lỗi
+  const headerList = headers();
+  // Lấy host đầy đủ (ví dụ: blueprintcapital.constructionxuandinh.sbs)
+  const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
+  
+  let sub = "";
 
-  try {
-    const headerList = headers();
-    // Vercel ưu tiên x-forwarded-host cho subdomain
-    const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
-    const domainParts = host.split(".");
-    
-    // Logic lấy subdomain chuẩn
-    if (domainParts.length >= 3) {
-      sub = domainParts[0].toLowerCase();
-    }
-    
-    // Loại bỏ các trường hợp đặc biệt
-    if (sub === "www" || sub === "localhost" || host.includes("vercel.app")) {
-      // Giữ nguyên logic cũ của bạn
-      if (!host.includes("blueantlerca")) {
-         sub = "hoanghai09";
-      } else {
-         sub = "blueantlerca";
-      }
-    }
-  } catch (err) {
-    console.error("Lỗi lấy Header:", err);
+  // LOGIC NHẬN DIỆN SUBDOMAIN MỚI:
+  const parts = host.split(".");
+  
+  if (parts.length >= 3) {
+    // Nếu có từ 3 thành phần trở lên (sub.domain.ltd), lấy cái đầu tiên
+    sub = parts[0].toLowerCase();
+  } else {
+    // Nếu chỉ có 2 thành phần (domain.ltd), đây là trang chủ
+    sub = "hoanghai09";
+  }
+
+  // Xử lý ngoại lệ cho www hoặc localhost
+  if (sub === "www" || sub === "localhost" || sub === "constructionxuandinh") {
+    sub = "hoanghai09";
   }
 
   let bizData: any = null;
 
   try {
-    // Fetch với cache no-store để cập nhật sheet liên tục
     const res = await fetch(SHEET_URL, { cache: "no-store" });
     const text = await res.text();
     const rows = parseCsv(text);
     
-    // Tìm dòng có cột A khớp với subdomain
-    const match = rows.find(r => r[0]?.toLowerCase().trim() === sub.trim());
+    // Tìm kiếm chính xác subdomain trong cột A của Google Sheet
+    // .trim() để loại bỏ khoảng trắng thừa trong file CSV
+    const match = rows.find(r => r[0]?.toLowerCase().trim() === sub);
 
     if (match) {
       bizData = {
@@ -68,11 +64,11 @@ export default async function Home() {
         image: match[5] || ""
       };
     } else {
-      // Fallback lấy dòng 2 (index 1) nếu không tìm thấy sub cụ thể
+      // Nếu không tìm thấy trong sheet, dùng dòng đầu tiên làm mặc định
       const defaultRow = rows[1];
       if (defaultRow) {
         bizData = {
-          subdomain: defaultRow[0],
+          subdomain: sub, // Vẫn giữ sub để biết đang ở đâu
           name: defaultRow[1],
           address: defaultRow[2],
           document: defaultRow[3],
@@ -82,16 +78,17 @@ export default async function Home() {
       }
     }
   } catch (e) {
-    console.error("Lỗi fetch CSV:", e);
+    console.error("Lỗi fetch:", e);
   }
 
-  // Đảm bảo bizData luôn có dữ liệu để không lỗi component con
+  // Dự phòng cuối cùng
   if (!bizData) {
     bizData = {
-      name: "CÔNG TY ĐANG CẬP NHẬT",
-      address: "Vui lòng kiểm tra Google Sheet",
-      document: "Đang tải...",
-      phone: "000.000.000",
+      subdomain: sub,
+      name: "Dữ liệu đang cập nhật",
+      address: "Vui lòng kiểm tra lại Google Sheet",
+      document: "N/A",
+      phone: "N/A",
       image: ""
     };
   }
