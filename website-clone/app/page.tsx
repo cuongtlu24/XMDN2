@@ -21,49 +21,72 @@ function parseCsv(text: string) {
 }
 
 export default async function Home() {
-  let sub = "hoanghai09"; // Mặc định
+  const headerList = headers();
   
-  try {
-    const headerList = headers();
-    const host = headerList.get("host") || "";
-    sub = host.split(".")[0].toLowerCase();
-    
-    if (sub === "www" || sub === "localhost" || sub.includes("constructionxuandinh")) {
-      sub = "hoanghai09"; 
-    }
-  } catch (e) {
-    console.error("Header error:", e);
+  // Ưu tiên lấy subdomain từ x-forwarded-host (chuẩn cho Vercel/Proxy)
+  const host = headerList.get("x-forwarded-host") || headerList.get("host") || "";
+  
+  const hostParts = host.split(".");
+  let sub = hostParts[0].toLowerCase();
+  
+  // Kiểm tra nếu là domain chính hoặc localhost thì dùng default
+  if (
+    sub === "www" || 
+    sub === "localhost" || 
+    host.includes("constructionxuandinh.sbs") && hostParts.length <= 2 ||
+    sub === "constructionxuandinh"
+  ) {
+    sub = "hoanghai09"; 
   }
 
-  let bizData = {
-    subdomain: sub,
-    name: "CÔNG TY ĐANG CẬP NHẬT",
-    address: "Đang cập nhật địa chỉ...",
-    document: "Đang cập nhật...",
-    phone: "0000.000.000",
-    image: ""
-  };
+  let bizData: any = null;
 
   try {
     const res = await fetch(SHEET_URL, { cache: "no-store" });
     const text = await res.text();
     const rows = parseCsv(text);
+    
+    // Tìm dòng khớp subdomain (Cột A)
     const match = rows.find(r => r[0]?.toLowerCase() === sub);
 
     if (match) {
       bizData = {
-        subdomain: match[0] || sub,
-        name: match[1] || "N/A",
-        address: match[2] || "N/A",
-        document: match[3] || "N/A",
-        phone: match[4] || "N/A",
-        image: match[5] || ""
+        subdomain: match[0],
+        name: match[1],
+        address: match[2],
+        document: match[3],
+        phone: match[4],
+        image: match[5]
       };
+    } else {
+      // Nếu không khớp, lấy dòng đầu tiên sau header (Dòng 2) làm mẫu
+      const defaultData = rows[1]; 
+      if (defaultData) {
+        bizData = {
+          subdomain: defaultData[0],
+          name: defaultData[1],
+          address: defaultData[2],
+          document: defaultData[3],
+          phone: defaultData[4],
+          image: defaultData[5]
+        };
+      }
     }
   } catch (e) {
     console.error("Fetch error:", e);
   }
 
-  // Truyền bizData xuống LandingClient để render phía client an toàn
+  // Fallback an toàn tuyệt đối
+  if (!bizData) {
+    bizData = {
+      subdomain: sub,
+      name: "CÔNG TY ĐANG CẬP NHẬT",
+      address: "Vui lòng kiểm tra lại Google Sheets",
+      document: "00000000",
+      phone: "0900000000",
+      image: ""
+    };
+  }
+
   return <LandingClient bizData={bizData} />;
 }
