@@ -1,104 +1,113 @@
-"use client";
-import { useEffect, useState } from "react";
-import { Header } from "@/components/header"
-import { HeroSection } from "@/components/hero-section"
-import { InvestmentSection } from "@/components/investment-section"
-import { AmenitiesSection } from "@/components/amenities-section"
-import { PotentialSection } from "@/components/potential-section"
-import { LegalSection } from "@/components/legal-section"
-import { FeaturesSection } from "@/components/features-section"
-import { ContactSection } from "@/components/contact-section"
-import { Footer } from "@/components/footer"
+import { headers } from "next/headers";
+import LandingClient, { BizData } from "@/components/LandingClient";
 
-export default function Home() {
-  const [bizData, setBizData] = useState<any>(null);
+// ===== CSV parser (y như bạn đang dùng) =====
+function parseCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let cur = "";
+  let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQ && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else inQ = !inQ;
+      continue;
+    }
+    if (ch === "," && !inQ) {
+      out.push(cur.trim());
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  out.push(cur.trim());
+  return out;
+}
 
-  // Link CSV từ Google Sheets của bạn (Đảm bảo đã Publish to web định dạng CSV)
-  const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=0&single=true&output=csv";
+function parseCsv(text: string) {
+  return text
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .map(parseCsvLine);
+}
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const host = window.location.hostname.toLowerCase();
-        let sub = host.split(".")[0];
-        
-        // Mặc định nếu chạy local hoặc domain chính không có subdomain
-        if (sub === "www" || sub === "localhost" || sub === "constructionxuandinh") {
-          sub = "hoanghai09"; 
-        }
+// ===== SLUG chuẩn hoá =====
+function slugify(s: string) {
+  return (s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^\ufeff/, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
 
-     const res = await fetch(SHEET_URL, { cache: "no-store" });
-        const text = await res.text();
-        
-        // CÁCH PARSE CSV AN TOÀN: Tách theo dòng, sau đó tách theo dấu phẩy
-        const rows = text.split(/\r?\n/).map(line => {
-          // Regex này xử lý được cả trường hợp dữ liệu nằm trong dấu ngoặc kép có chứa dấu phẩy
-          const result = [];
-          let cell = "";
-          let inQuotes = false;
-          for (let char of line) {
-            if (char === '"') inQuotes = !inQuotes;
-            else if (char === ',' && !inQuotes) {
-              result.push(cell.trim());
-              cell = "";
-            } else cell += char;
-          }
-          result.push(cell.trim());
-          return result;
-        });
-        
-        const match = rows.find(r => r[0]?.toLowerCase() === sub);
+const SHEET_URL =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5dTqFLGiQ/pub?gid=0&single=true&output=csv";
 
-        if (match) {
-          setBizData({
-            subdomain: match[0],
-            name: match[1],
-            address: match[2],
-            document: match[3], // Document ID (Cột D)
-            phone: match[4],    // Số điện thoại (Cột E)
-            image: match[5]     // Link Ảnh (Cột F)
-          });
-        } else {
-          // Phòng hờ lỗi 404: Nếu không khớp subdomain, lấy dòng đầu tiên có dữ liệu
-          const defaultData = rows[1]; 
-          if (defaultData) {
-            setBizData({
-              subdomain: defaultData[0],
-              name: defaultData[1],
-              address: defaultData[2],
-              document: defaultData[3],
-              phone: defaultData[4],
-              image: defaultData[5]
-            });
-          }
-        }
-      } catch (e) {
-        console.error("Lỗi lấy dữ liệu:", e);
-      }
+async function getBizDataFromHost(): Promise<BizData> {
+  const host = headers().get("host")?.toLowerCase() || "";
+  let sub = host.split(".")[0];
+  if (sub === "www") sub = host.split(".")[1] || "";
+  const wanted = slugify(sub);
+
+  const res = await fetch(SHEET_URL, { next: { revalidate: 300 } }); // cache 5 phút
+  const text = await res.text();
+  const rows = parseCsv(text);
+
+  const match = rows.find((r) => slugify(r[0] || "") === wanted);
+
+  if (match) {
+    return {
+      name: match[1] || "",
+      address: match[2] || "",
+      document: match[3] || "",
+      phone: match[4] || "",
+      image: (match[5] || "").trim(),
     };
-    fetchData();
-  }, []);
-
-  if (!bizData) {
-    return (
-      <div className="h-screen flex flex-col items-center justify-center bg-[#052c24] text-white">
-        <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-lg font-medium animate-pulse">Đang kết nối dữ liệu dự án...</p>
-      </div>
-    );
   }
 
+  // fallback y như bạn đang dùng
+  return {
+    name: "Johnson Marketing LLC",
+    address: "123 Wall Street, New York",
+    document: "B2025034222",
+    phone: "0912 345 678",
+    image: "",
+  };
+}
+
+// ✅ title server-side để crawler thấy
+export async function generateMetadata() {
+  const data = await getBizDataFromHost();
+  return { title: data.name };
+}
+
+export default async function Page() {
+  const data = await getBizDataFromHost();
+
   return (
-    <main className="overflow-x-hidden">
-      <Header biz={bizData} />
-      <HeroSection biz={bizData} />
-      <InvestmentSection biz={bizData} />
-      <AmenitiesSection biz={bizData} />
-      <PotentialSection biz={bizData} />
-      <LegalSection biz={bizData} />
-      <FeaturesSection biz={bizData} />
-      <ContactSection biz={bizData} />
-      <Footer biz={bizData} />
-    </main>
+    <>
+      {/* ✅ QUAN TRỌNG: FB crawler đọc được ngay trong HTML */}
+      <div style={{ display: "none" }} aria-hidden="true">
+        Legal business name: {data.name} | Address: {data.address} | Phone: {data.phone}
+      </div>
+
+      <noscript>
+        <div>
+          Legal business name: {data.name}
+          <br />
+          Address: {data.address}
+          <br />
+          Phone: {data.phone}
+        </div>
+      </noscript>
+
+      <LandingClient data={data} />
+    </>
   );
 }
