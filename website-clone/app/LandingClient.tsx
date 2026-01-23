@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
-import { Header } from "@/components/header"
-import { HeroSection } from "@/components/hero-section"
-import { InvestmentSection } from "@/components/investment-section"
-import { AmenitiesSection } from "@/components/amenities-section"
-import { PotentialSection } from "@/components/potential-section"
-import { LegalSection } from "@/components/legal-section"
-import { FeaturesSection } from "@/components/features-section"
-import { ContactSection } from "@/components/contact-section"
-import { Footer } from "@/components/footer"
+import { Header } from "@/components/header";
+import { HeroSection } from "@/components/hero-section";
+import { InvestmentSection } from "@/components/investment-section";
+import { AmenitiesSection } from "@/components/amenities-section";
+import { PotentialSection } from "@/components/potential-section";
+import { LegalSection } from "@/components/legal-section";
+import { FeaturesSection } from "@/components/features-section";
+import { ContactSection } from "@/components/contact-section";
+import { Footer } from "@/components/footer";
 
-interface BizData {
+// Định nghĩa Interface ngay tại đây để tránh lỗi 'any' hoặc thiếu kiểu dữ liệu
+export interface BizData {
   subdomain: string;
   name: string;
   address: string;
@@ -22,13 +23,13 @@ interface BizData {
 
 export default function LandingClient({ bizData }: { bizData: BizData }) {
   
-  // Cập nhật tiêu đề trang ngay khi load
   useEffect(() => {
     if (bizData?.name) {
       document.title = bizData.name;
     }
   }, [bizData]);
 
+  // Next.js yêu cầu dữ liệu 'biz' truyền vào các component con phải đồng nhất
   return (
     <main className="overflow-x-hidden">
       <Header biz={bizData} />
