@@ -1,6 +1,9 @@
 // app/page.tsx
 import LandingClient from "./LandingClient";
 import { unstable_noStore as noStore } from "next/cache";
+import { headers } from "next/headers";
+import type { Metadata } from "next";
+
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -70,6 +73,60 @@ function subFromHost(host: string) {
   }
   return "";
 }
+function extractFbToken(raw: string) {
+  const s = (raw || "").trim();
+
+  // Case 1: user pasted full meta tag
+  const m1 = s.match(/content\s*=\s*"([^"]+)"/i);
+  if (m1?.[1]) return m1[1].trim();
+
+  // Case 2: user pasted "facebook-domain-verification=TOKEN"
+  const m2 = s.match(/facebook-domain-verification\s*=\s*([A-Za-z0-9_-]+)/i);
+  if (m2?.[1]) return m2[1].trim();
+
+  // Case 3: token only
+  if (/^[A-Za-z0-9_-]{10,}$/.test(s)) return s;
+
+  return "";
+}
+
+async function fetchRows() {
+  const res = await fetch(SHEET_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Fetch CSV failed: ${res.status}`);
+  const text = await res.text();
+  return parseCsv(text);
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  noStore();
+
+  // ưu tiên host thật
+  const h = await headers();
+  const hostReal = h.get("host") || "";
+  const wanted = norm(subFromHost(hostReal));
+
+  let token = "";
+
+  try {
+    if (wanted) {
+      const rows = await fetchRows();
+      const match = rows.find(
+        (r) => normalizeSlugCell(r?.[0] || "") === wanted
+      );
+
+      // ✅ Cột G = index 6 (token)
+      const rawG = (match?.[6] || "").toString();
+      token = extractFbToken(rawG);
+    }
+  } catch {
+    token = "";
+  }
+
+  return {
+    other: token ? { "facebook-domain-verification": token } : {},
+  };
+}
+
 
 export default async function Home({
   searchParams,
@@ -99,11 +156,8 @@ export default async function Home({
   let debugFirstSlugs: string[] = [];
 
   try {
-    const res = await fetch(SHEET_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Fetch CSV failed: ${res.status}`);
+  const rows = await fetchRows();
 
-    const text = await res.text();
-    const rows = parseCsv(text);
 
     // debug 8 dòng đầu
     debugFirstSlugs = rows.slice(0, 8).map((r) => (r?.[0] || "").toString());
@@ -121,6 +175,7 @@ export default async function Home({
           document: match[3] || "N/A",
           phone: match[4] || "N/A",
           image: match[5] || "",
+          
         };
       }
     }
