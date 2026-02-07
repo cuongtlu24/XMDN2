@@ -143,6 +143,20 @@ function pickFbToken(row: string[]) {
   return "";
 }
 
+// ✅ THÊM HÀM LẤY OG IMAGE URL
+function pickOgImage(row: string[]) {
+  // Thử lấy từ cột I (index 8) hoặc cột F (index 5 - image hiện tại)
+  const tryIdx = [8, 5, 9, 10];
+  for (const idx of tryIdx) {
+    const v = (row?.[idx] || "").toString().trim();
+    if (v && (v.startsWith('http://') || v.startsWith('https://'))) {
+      return v;
+    }
+  }
+  return "";
+}
+
+// ✅ CẢI THIỆN HÀM generateMetadata
 export async function generateMetadata(): Promise<Metadata> {
   noStore();
 
@@ -151,6 +165,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const wanted = norm(subFromHost(hostReal));
 
   let token = "";
+  let ogImageUrl = "";
+  let companyName = "";
+  let companyDesc = "";
 
   const [rows1, rows2] = await Promise.all([
     fetchRowsSafe(SHEET_URL_1),
@@ -161,10 +178,53 @@ export async function generateMetadata(): Promise<Metadata> {
   const match2 = match1 ? null : findRowBySub(rows2, wanted);
   const match = match1 || match2;
 
-  if (match) token = pickFbToken(match);
+  if (match) {
+    token = pickFbToken(match);
+    ogImageUrl = pickOgImage(match);
+    companyName = (match[1] || "Hệ Thống Bất Động Sản Cao Cấp").toString();
+    companyDesc = (match[2] || "Chuyên trang bất động sản nghỉ dưỡng, pháp lý minh bạch, sổ hồng riêng.").toString();
+  }
+
+  // Fallback image nếu không có trong sheet
+  const finalOgImage = ogImageUrl || `https://${hostReal}/images/villa-garden.jpg`;
 
   return {
+    title: companyName,
+    description: companyDesc,
+    
+    // ✅ DYNAMIC OPEN GRAPH
+    openGraph: {
+      type: 'website',
+      locale: 'vi_VN',
+      url: `https://${hostReal}/`,
+      siteName: companyName,
+      title: companyName,
+      description: companyDesc,
+      images: [
+        {
+          url: finalOgImage,
+          width: 1200,
+          height: 630,
+          alt: `${companyName} - Premium Real Estate`,
+        }
+      ],
+    },
+    
+    // ✅ DYNAMIC TWITTER CARD
+    twitter: {
+      card: 'summary_large_image',
+      title: companyName,
+      description: companyDesc,
+      images: [finalOgImage],
+    },
+    
+    // ✅ FACEBOOK DOMAIN VERIFICATION
     other: token ? { "facebook-domain-verification": token } : {},
+    
+    // ✅ CANONICAL URL
+    alternates: {
+      canonical: `https://${hostReal}/`,
+    },
   };
 }
 
