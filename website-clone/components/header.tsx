@@ -23,7 +23,7 @@ export function Header({ biz }: { biz: any }) {
           {/* Logo/Brand Name lấy từ Sheets */}
          <a href="#home" className="flex flex-col">
     {/* Tên công ty: To và nổi bật */}
-    <span className="text-secondary font-black text-xl md:text-2xl tracking-tighter leading-none uppercase">
+    <span className="text-secondary font-black text-xl md:text-2xl tracking-tighter leading-none ">
       {biz.name}
     </span>
     
