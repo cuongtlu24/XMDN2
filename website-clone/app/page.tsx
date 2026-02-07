@@ -116,47 +116,40 @@ function findRowBySub(rows: string[][], wanted: string) {
   );
 }
 
+// ✅ LẤY EMAIL TỪ CỘT K (INDEX 10)
 function pickEmail(row: string[]) {
-  // ưu tiên các cột thường dùng (G / K / L...), rồi fallback scan
-  const tryIdx = [10, 11, 6, 7];
-  for (const idx of tryIdx) {
-    const v = (row?.[idx] || "").toString().trim();
-    if (v.includes("@")) return v;
-  }
+  const v = (row?.[10] || "").toString().trim();
+  if (v && v.includes("@")) return v;
+  
+  // Fallback scan nếu cột K trống
   const any = row.find((c) => (c || "").toString().includes("@"));
   return (any || "").toString().trim();
 }
 
+// ✅ LẤY FB TOKEN TỪ CỘT G (INDEX 6)
 function pickFbToken(row: string[]) {
-  // ưu tiên cột H (index 7) theo format bạn mô tả, rồi fallback
-  const tryIdx = [7, 6, 8, 10, 11, 5];
-  for (const idx of tryIdx) {
-    const raw = (row?.[idx] || "").toString();
-    const t = extractFbToken(raw);
-    if (t) return t;
-  }
-  // fallback scan tất cả cột
+  const raw = (row?.[6] || "").toString();
+  const t = extractFbToken(raw);
+  if (t) return t;
+  
+  // Fallback scan các cột khác
   for (const c of row) {
-    const t = extractFbToken((c || "").toString());
-    if (t) return t;
+    const token = extractFbToken((c || "").toString());
+    if (token) return token;
   }
   return "";
 }
 
-// ✅ THÊM HÀM LẤY OG IMAGE URL
+// ✅ LẤY OG IMAGE URL TỪ CỘT P (INDEX 15)
 function pickOgImage(row: string[]) {
-  // Thử lấy từ cột I (index 8) hoặc cột F (index 5 - image hiện tại)
-  const tryIdx = [8, 5, 9, 10];
-  for (const idx of tryIdx) {
-    const v = (row?.[idx] || "").toString().trim();
-    if (v && (v.startsWith('http://') || v.startsWith('https://'))) {
-      return v;
-    }
+  const v = (row?.[15] || "").toString().trim();
+  if (v && (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('/'))) {
+    return v;
   }
   return "";
 }
 
-// ✅ CẢI THIỆN HÀM generateMetadata
+// ✅ DYNAMIC METADATA - LẤY ĐÚNG CỘT
 export async function generateMetadata(): Promise<Metadata> {
   noStore();
 
@@ -166,8 +159,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   let token = "";
   let ogImageUrl = "";
-  let companyName = "";
-  let companyDesc = "";
+  let companyName = "Hệ Thống Bất Động Sản Cao Cấp";
+  let companyDesc = "Chuyên trang bất động sản nghỉ dưỡng, pháp lý minh bạch, sổ hồng riêng.";
 
   const [rows1, rows2] = await Promise.all([
     fetchRowsSafe(SHEET_URL_1),
@@ -181,12 +174,33 @@ export async function generateMetadata(): Promise<Metadata> {
   if (match) {
     token = pickFbToken(match);
     ogImageUrl = pickOgImage(match);
-    companyName = (match[1] || "Hệ Thống Bất Động Sản Cao Cấp").toString();
-    companyDesc = (match[2] || "Chuyên trang bất động sản nghỉ dưỡng, pháp lý minh bạch, sổ hồng riêng.").toString();
+    
+    // Cột B (index 1): Tên công ty
+    const name = (match[1] || "").toString().trim();
+    if (name && name !== "N/A") {
+      companyName = name;
+    }
+    
+    // Cột C (index 2): Địa chỉ
+    const addr = (match[2] || "").toString().trim();
+    if (addr && addr !== "N/A") {
+      companyDesc = `Bất động sản cao cấp tại ${addr}. Pháp lý minh bạch, sổ hồng riêng.`;
+    }
   }
 
-  // Fallback image nếu không có trong sheet
-  const finalOgImage = ogImageUrl || `https://${hostReal}/images/villa-garden.jpg`;
+  // ✅ XỬ LÝ OG IMAGE URL
+  let finalOgImage = "";
+  if (ogImageUrl) {
+    // Nếu là relative path, thêm domain
+    if (ogImageUrl.startsWith('/')) {
+      finalOgImage = `https://${hostReal}${ogImageUrl}`;
+    } else {
+      finalOgImage = ogImageUrl;
+    }
+  } else {
+    // Fallback image
+    finalOgImage = `https://${hostReal}/images/villa-garden.jpg`;
+  }
 
   return {
     title: companyName,
@@ -210,7 +224,7 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
     },
     
-    // ✅ DYNAMIC TWITTER CARD
+    // ✅ TWITTER CARD
     twitter: {
       card: 'summary_large_image',
       title: companyName,
@@ -237,11 +251,9 @@ export default async function Home({
 
   const sp = await searchParams;
 
-  // ✅ lấy host thật từ header (đúng nhất khi chạy trên domain thật)
   const h = await headers();
-  const hostReal = (h.get("host") || "").split(":")[0]; // bỏ port nếu có
+  const hostReal = (h.get("host") || "").split(":")[0];
 
-  // vẫn cho phép override để test: ?__sub=abc
   const subQ = typeof sp.__sub === "string" ? norm(sp.__sub) : "";
   const wanted = subQ || norm(subFromHost(hostReal)) || "";
 
@@ -255,8 +267,8 @@ export default async function Home({
   const match = match1 || match2;
 
   let bizData: any = {
-    subdomain: wanted, // chỉ để logic nội bộ
-    host: hostReal, // ✅ dùng để footer hiển thị domain thật
+    subdomain: wanted,
+    host: hostReal,
     name: "CÔNG TY ĐANG CẬP NHẬT",
     address: "Đang cập nhật địa chỉ...",
     document: "Đang cập nhật...",
@@ -269,12 +281,12 @@ export default async function Home({
     bizData = {
       subdomain: normalizeSlugCell(match[0] || wanted) || wanted,
       host: hostReal,
-      name: (match[1] || "N/A").toString(),     // ✅ giữ nguyên hoa/thường theo Sheet
-      address: (match[2] || "N/A").toString(),  // ✅ giữ nguyên
-      document: (match[3] || "N/A").toString(),
-      phone: (match[4] || "N/A").toString(),
-      email: pickEmail(match),
-      image: (match[5] || "").toString(),
+      name: (match[1] || "N/A").toString(),      // Cột B
+      address: (match[2] || "N/A").toString(),   // Cột C
+      document: (match[3] || "N/A").toString(),  // Cột D (Tax ID)
+      phone: (match[4] || "N/A").toString(),     // Cột E
+      email: pickEmail(match),                   // Cột K
+      image: (match[5] || "").toString(),        // Cột F (nếu có)
     };
   }
 
