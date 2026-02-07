@@ -1,0 +1,20 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Facebook crawlers
+User-agent: Facebot
+Allow: /
+
+User-agent: facebookexternalhit/1.1
+Allow: /
+
+# Google crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+# Sitemap location
+Sitemap: https://10thhouselegacyinc.bmverification.com/sitemap.xml
