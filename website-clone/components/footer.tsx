@@ -56,7 +56,7 @@ export function Footer({ biz }: { biz: any }) {
                 <div className="w-10 h-10 rounded-xl bg-background/5 flex items-center justify-center shrink-0">
                   <Globe className="w-5 h-5 text-secondary" />
                 </div>
-                <span className="text-sm font-medium lowercase italic underline underline-offset-4 decoration-secondary/30">
+                <span className="text-sm font-medium italic underline underline-offset-4 decoration-secondary/30">
                   {biz.subdomain}.constructionxuandinh.sbs
                 </span>
               </div>
@@ -104,7 +104,7 @@ export function Footer({ biz }: { biz: any }) {
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center shrink-0 shadow-lg shadow-secondary/20">
                   <ShieldCheck className="w-6 h-6 text-secondary-foreground" />
                 </div>
-                <p className="text-xl md:text-2xl uppercase tracking-tighter text-secondary font-black">
+                <p className="text-xl md:text-2xl tracking-tighter text-secondary font-black">
                   Verified Document: <span className="underline decoration-2 underline-offset-4">{biz.document}</span>
                 </p>
               </div>
@@ -118,7 +118,7 @@ export function Footer({ biz }: { biz: any }) {
         </div>
 
         {/* BOTTOM BAR */}
-        <div className="mt-20 pt-10 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6 text-background/40 text-[12px] uppercase tracking-[0.2em] font-bold">
+        <div className="mt-20 pt-10 border-t border-background/10 flex flex-col md:flex-row justify-between items-center gap-6 text-background/40 text-[12px]  tracking-[0.2em] font-bold">
           <p>© {currentYear} {biz.name}. All rights reserved.</p>
           <p className="flex items-center gap-2">
             <span>Phát triển bởi</span>

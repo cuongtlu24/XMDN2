@@ -34,12 +34,12 @@ export function HeroSection({ biz }: BizProps) {
             <p className="text-background/80 text-sm md:text-base mb-2 font-medium">
               {companyName}
             </p>
-            <p className="text-background/60 text-xs md:text-sm tracking-widest uppercase">
+            <p className="text-background/60 text-xs md:text-sm tracking-widest ">
               DOCUMENT: {biz.document || "N/A"}
             </p>
           </div>
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-4 leading-tight text-balance uppercase tracking-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-background mb-4 leading-tight text-balance  tracking-tight">
             {companyName}
           </h1>
           

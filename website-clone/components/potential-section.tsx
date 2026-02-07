@@ -65,7 +65,7 @@ export function PotentialSection({ biz }: { biz: any }) {
                   <div className="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary/10 group-hover:bg-primary/10">
                     <benefit.icon className="w-8 h-8 text-primary" />
                   </div>
-                  <p className="font-bold text-foreground text-xs uppercase tracking-tighter">
+                  <p className="font-bold text-foreground text-xs tracking-tighter">
                     {benefit.label}
                   </p>
                 </div>
