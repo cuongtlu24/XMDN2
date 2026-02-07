@@ -46,7 +46,7 @@ export function Footer({ biz }: { biz: any }) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-black text-secondary tracking-[0.2em]">Hồ sơ pháp lý</span>
-                  <span className="text-xl font-black text-secondary tracking-wider uppercase">
+                  <span className="text-xl font-black text-secondary tracking-wider ">
                     Mã tài liệu: {biz.document}
                   </span>
                 </div>
