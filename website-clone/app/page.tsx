@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-// ✅ Sheet 1 (gid=1456635708) + Sheet 2 (default)
+// ✅ 2 bảng CSV
 const SHEET_URL_1 =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=1456635708&single=true&output=csv";
 
@@ -59,12 +59,10 @@ function norm(s: string) {
 }
 
 function normalizeSlugCell(cell: string) {
-  // giữ logic cũ: cell có thể là "subdomain" hoặc full URL
   const v = norm(cell).replace(/^https?:\/\//, "").replace(/^www\./, "");
   return (v.split(".")[0] || "").trim().toLowerCase();
 }
 
-// ✅ lấy sub từ host
 function subFromHost(host: string) {
   const h = (host || "").split(",")[0].trim().toLowerCase().split(":")[0];
   if (!h) return "";
@@ -76,10 +74,6 @@ function subFromHost(host: string) {
     if (sub && sub !== "www") return sub;
   }
   return "";
-}
-
-function hostClean(host: string) {
-  return (host || "").split(",")[0].trim().split(":")[0];
 }
 
 function extractFbToken(raw: string) {
@@ -99,20 +93,6 @@ function extractFbToken(raw: string) {
   return "";
 }
 
-// ✅ ưu tiên đúng cột H (index 7), nhưng fallback thêm vài cột để khỏi lệch sheet
-function getFbTokenFromRow(row: any[]) {
-  const candidates = [
-    row?.[7], // H (Veridomain fb html) - theo sheet mới
-    row?.[6], // G (nếu ai đó đang dùng cột khác)
-    row?.[8], // I (phòng lệch)
-  ];
-  for (const c of candidates) {
-    const t = extractFbToken((c ?? "").toString());
-    if (t) return t;
-  }
-  return "";
-}
-
 async function fetchRowsFrom(url: string) {
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Fetch CSV failed: ${res.status}`);
@@ -120,36 +100,68 @@ async function fetchRowsFrom(url: string) {
   return parseCsv(text);
 }
 
-// ✅ lấy data từ 2 bảng: tìm sheet 1 trước, không có thì sheet 2
-async function findRowBySub(wanted: string) {
-  const rows1 = await fetchRowsFrom(SHEET_URL_1);
-  const match1 = rows1.find((r) => normalizeSlugCell(r?.[0] || "") === wanted);
-  if (match1) return { row: match1, sheetIndex: 1 };
+async function fetchRowsSafe(url: string) {
+  try {
+    return await fetchRowsFrom(url);
+  } catch {
+    return [] as string[][];
+  }
+}
 
-  const rows2 = await fetchRowsFrom(SHEET_URL_2);
-  const match2 = rows2.find((r) => normalizeSlugCell(r?.[0] || "") === wanted);
-  if (match2) return { row: match2, sheetIndex: 2 };
+function findRowBySub(rows: string[][], wanted: string) {
+  if (!wanted) return null;
+  return (
+    rows.find((r) => normalizeSlugCell((r?.[0] || "").toString()) === wanted) ||
+    null
+  );
+}
 
-  return { row: null as any, sheetIndex: 0 };
+function pickEmail(row: string[]) {
+  // ưu tiên các cột thường dùng (G / K / L...), rồi fallback scan
+  const tryIdx = [10, 11, 6, 7];
+  for (const idx of tryIdx) {
+    const v = (row?.[idx] || "").toString().trim();
+    if (v.includes("@")) return v;
+  }
+  const any = row.find((c) => (c || "").toString().includes("@"));
+  return (any || "").toString().trim();
+}
+
+function pickFbToken(row: string[]) {
+  // ưu tiên cột H (index 7) theo format bạn mô tả, rồi fallback
+  const tryIdx = [7, 6, 8, 10, 11, 5];
+  for (const idx of tryIdx) {
+    const raw = (row?.[idx] || "").toString();
+    const t = extractFbToken(raw);
+    if (t) return t;
+  }
+  // fallback scan tất cả cột
+  for (const c of row) {
+    const t = extractFbToken((c || "").toString());
+    if (t) return t;
+  }
+  return "";
 }
 
 export async function generateMetadata(): Promise<Metadata> {
   noStore();
 
   const h = await headers();
-  const hostReal = hostClean(h.get("host") || "");
+  const hostReal = h.get("host") || "";
   const wanted = norm(subFromHost(hostReal));
 
   let token = "";
 
-  try {
-    if (wanted) {
-      const found = await findRowBySub(wanted);
-      if (found.row) token = getFbTokenFromRow(found.row);
-    }
-  } catch {
-    token = "";
-  }
+  const [rows1, rows2] = await Promise.all([
+    fetchRowsSafe(SHEET_URL_1),
+    fetchRowsSafe(SHEET_URL_2),
+  ]);
+
+  const match1 = findRowBySub(rows1, wanted);
+  const match2 = match1 ? null : findRowBySub(rows2, wanted);
+  const match = match1 || match2;
+
+  if (match) token = pickFbToken(match);
 
   return {
     other: token ? { "facebook-domain-verification": token } : {},
@@ -165,50 +177,45 @@ export default async function Home({
 
   const sp = await searchParams;
 
-  const hostRaw = typeof sp.__host === "string" ? sp.__host : "";
-  const subQ = typeof sp.__sub === "string" ? norm(sp.__sub) : "";
-
-  // ✅ ưu tiên host thật từ request (chuẩn cho vercel)
+  // ✅ lấy host thật từ header (đúng nhất khi chạy trên domain thật)
   const h = await headers();
-  const hostReal = hostClean(h.get("host") || hostRaw);
+  const hostReal = (h.get("host") || "").split(":")[0]; // bỏ port nếu có
 
-  const DEFAULT_SUB = "";
-  const wanted = subQ || norm(subFromHost(hostReal)) || DEFAULT_SUB;
+  // vẫn cho phép override để test: ?__sub=abc
+  const subQ = typeof sp.__sub === "string" ? norm(sp.__sub) : "";
+  const wanted = subQ || norm(subFromHost(hostReal)) || "";
+
+  const [rows1, rows2] = await Promise.all([
+    fetchRowsSafe(SHEET_URL_1),
+    fetchRowsSafe(SHEET_URL_2),
+  ]);
+
+  const match1 = findRowBySub(rows1, wanted);
+  const match2 = match1 ? null : findRowBySub(rows2, wanted);
+  const match = match1 || match2;
 
   let bizData: any = {
-    // subdomain để dùng hiển thị (giữ theo sheet)
-    subdomain: wanted,
+    subdomain: wanted, // chỉ để logic nội bộ
+    host: hostReal, // ✅ dùng để footer hiển thị domain thật
     name: "CÔNG TY ĐANG CẬP NHẬT",
     address: "Đang cập nhật địa chỉ...",
     document: "Đang cập nhật...",
     phone: "0000.000.000",
+    email: "",
     image: "",
-    // ✅ domain thật đang truy cập
-    domain: hostReal,
   };
 
-  try {
-    if (wanted) {
-      const found = await findRowBySub(wanted);
-
-      if (found.row) {
-        const r = found.row;
-
-        // map theo kiểu cũ của bạn: A..F
-        // A=subdomain, B=name, C=address, D=tax/document, E=phone, F=image (nếu có)
-        bizData = {
-          subdomain: (r?.[0] || wanted).toString(), // giữ nguyên theo sheet
-          name: (r?.[1] || "N/A").toString(),
-          address: (r?.[2] || "N/A").toString(),
-          document: (r?.[3] || "N/A").toString(),
-          phone: (r?.[4] || "N/A").toString(),
-          image: (r?.[5] || "").toString(),
-          domain: hostReal,
-        };
-      }
-    }
-  } catch (e) {
-    console.error("Fetch error:", e);
+  if (match) {
+    bizData = {
+      subdomain: normalizeSlugCell(match[0] || wanted) || wanted,
+      host: hostReal,
+      name: (match[1] || "N/A").toString(),     // ✅ giữ nguyên hoa/thường theo Sheet
+      address: (match[2] || "N/A").toString(),  // ✅ giữ nguyên
+      document: (match[3] || "N/A").toString(),
+      phone: (match[4] || "N/A").toString(),
+      email: pickEmail(match),
+      image: (match[5] || "").toString(),
+    };
   }
 
   return <LandingClient bizData={bizData} />;
