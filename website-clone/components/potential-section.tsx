@@ -2,48 +2,48 @@ import { Button } from "@/components/ui/button"
 import { FileCheck, Building, FileText, Sparkles } from "lucide-react"
 
 const benefits = [
-  { icon: FileCheck, label: "Sổ hồng riêng" },
-  { icon: Building, label: "Hỗ trợ ngân hàng" },
-  { icon: FileText, label: "Công chứng sang tên ngay" },
+  { icon: FileCheck, label: "Individual title deed" },
+  { icon: Building, label: "Bank support" },
+  { icon: FileText, label: "Immediate notarization" },
 ]
 
 export function PotentialSection({ biz }: { biz: any }) {
-  // Xử lý tách tỉnh thành an toàn hơn để tránh lỗi nếu địa chỉ không đúng định dạng
+  // Safer province extraction to avoid errors if address format is incorrect
   const getProvince = (address: string) => {
-    if (!address) return "khu vực";
+    if (!address) return "the area";
     const parts = address.split(",");
-    // Lấy phần tử cuối cùng (thường là tỉnh/thành phố)
-    return parts[parts.length - 1]?.trim() || "khu vực";
+    // Get the last element (usually province/city)
+    return parts[parts.length - 1]?.trim() || "the area";
   };
 
   const province = getProvince(biz.address);
 
   const potentialPoints = [
-    `${biz.name} – Tâm điểm kết nối vùng kinh tế trọng điểm tại ${province}.`,
-    `Vị trí đắc địa tại ${biz.address}, khu vực đang được quy hoạch mở rộng phát triển mạnh mẽ.`,
-    "Phát triển đô thị sinh thái mới: kết hợp du lịch nghỉ dưỡng, hồ, thác và cảnh quan bền vững.",
-    "Chú trọng phát triển các đô thị chức năng, thương mại dịch vụ và hệ thống dân cư hiện đại.",
-    `Đón đầu quy hoạch sử dụng "đất ở" mức cao nhất giai đoạn 2021 - 2030 tại địa phương.`,
-    "Hưởng lợi trực tiếp từ các dự án hạ tầng chiến lược: nâng cấp quốc lộ và cao tốc liên tỉnh.",
+    `${biz.name} – The focal point connecting the key economic region in ${province}.`,
+    `Prime location at ${biz.address}, an area currently being planned for strong expansion and development.`,
+    "New eco-urban development: combining tourism, recreation, lakes, waterfalls, and sustainable landscapes.",
+    "Focus on developing functional urban areas, commercial services, and modern residential systems.",
+    `Leading the highest-level \"residential land\" planning for the 2021-2030 period in the locality.`,
+    "Directly benefiting from strategic infrastructure projects: national highway upgrades and interprovincial expressways.",
   ]
 
   return (
     <section id="investment" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        {/* Tiêu đề Section */}
+        {/* Section Title */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 text-secondary mb-4">
             <Sparkles className="w-5 h-5 fill-current" />
-            <span className="font-bold tracking-widest uppercase text-sm">Cơ hội đầu tư tốt nhất</span>
+            <span className="font-bold tracking-widest uppercase text-sm">Best Investment Opportunity</span>
           </div>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-foreground mb-4 uppercase leading-tight">
-            TIỀM NĂNG ĐẦU TƯ <br className="hidden md:block" /> VÀ AN CƯ TẠI {biz.name}
+            INVESTMENT POTENTIAL <br className="hidden md:block" /> AND RESIDENTIAL VALUE AT {biz.name}
           </h2>
           <div className="w-24 h-1.5 bg-secondary mx-auto rounded-full" />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Cột trái - Các điểm tiềm năng */}
+          {/* Left Column - Potential Points */}
           <div className="bg-muted/50 rounded-2xl p-8 md:p-10 border border-muted shadow-sm">
             <ul className="space-y-6">
               {potentialPoints.map((point, index) => (
@@ -57,7 +57,7 @@ export function PotentialSection({ biz }: { biz: any }) {
             </ul>
           </div>
 
-          {/* Cột phải - Biểu tượng lợi ích và CTA */}
+          {/* Right Column - Benefits Icons and CTA */}
           <div className="space-y-12">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {benefits.map((benefit, index) => (
@@ -72,23 +72,23 @@ export function PotentialSection({ biz }: { biz: any }) {
               ))}
             </div>
 
-            {/* Box Action Kêu gọi liên hệ */}
+            {/* Action Box Call to Contact */}
             <div className="bg-foreground text-background p-8 rounded-2xl relative overflow-hidden shadow-2xl">
               <div className="relative z-10 text-center">
-                <h3 className="text-xl font-bold mb-4">Bắt đầu hành trình đầu tư ngay hôm nay</h3>
+                <h3 className="text-xl font-bold mb-4">Start your investment journey today</h3>
                 <p className="text-background/70 text-sm mb-8">
-                  Liên hệ Hotline <span className="text-secondary font-bold text-lg">{biz.phone}</span> để nhận bảng giá và sơ đồ vị trí mới nhất.
+                  Contact Hotline <span className="text-secondary font-bold text-lg">{biz.phone}</span> to receive the latest price list and location map.
                 </p>
                 <Button 
                   size="lg"
                   className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-black px-12 py-8 text-xl rounded-full shadow-lg hover:scale-105 transition-all duration-300 active:scale-95"
                   onClick={() => window.open(`tel:${biz.phone}`)}
                 >
-                  NHẬN BÁO GIÁ CHI TIẾT
+                  GET DETAILED QUOTE
                 </Button>
               </div>
               
-              {/* Hiệu ứng trang trí nền */}
+              {/* Background Decoration Effects */}
               <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-secondary/20 rounded-full blur-3xl animate-pulse" />
               <div className="absolute -left-10 -top-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl" />
             </div>

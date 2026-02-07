@@ -1,12 +1,12 @@
 import { Car, TrendingUp, FileCheck, Users, Rocket, Building2 } from "lucide-react"
 
 const features = [
-  { icon: Car, label: "GIAO THÔNG", sublabel: "THUẬN TIỆN" },
-  { icon: TrendingUp, label: "THANH KHOẢN", sublabel: "CAO" },
-  { icon: FileCheck, label: "PHÁP LÝ", sublabel: "MINH BẠCH" },
-  { icon: Users, label: "DÂN CƯ", sublabel: "HIỆN HỮU" },
-  { icon: Rocket, label: "TIỀM NĂNG", sublabel: "PHÁT TRIỂN" },
-  { icon: Building2, label: "CƠ SỞ HẠ TẦNG", sublabel: "ĐỒNG BỘ" },
+  { icon: Car, label: "TRANSPORTATION", sublabel: "CONVENIENT" },
+  { icon: TrendingUp, label: "LIQUIDITY", sublabel: "HIGH" },
+  { icon: FileCheck, label: "LEGAL", sublabel: "TRANSPARENT" },
+  { icon: Users, label: "COMMUNITY", sublabel: "ESTABLISHED" },
+  { icon: Rocket, label: "POTENTIAL", sublabel: "DEVELOPMENT" },
+  { icon: Building2, label: "INFRASTRUCTURE", sublabel: "SYNCHRONIZED" },
 ]
 
 export function FeaturesSection() {

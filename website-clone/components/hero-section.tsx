@@ -12,8 +12,8 @@ interface BizProps {
 }
 
 export function HeroSection({ biz }: BizProps) {
-  // Tạo giá trị mặc định nếu dữ liệu Sheets bị trống
-  const companyName = biz.name || "Đang cập nhật tên đơn vị";
+  // Create default values if Sheets data is empty
+  const companyName = biz.name || "Updating company name";
   const bgImage = biz.image || "/images/hero-bg.jpg";
 
   return (
@@ -44,33 +44,33 @@ export function HeroSection({ biz }: BizProps) {
           </h1>
           
           <h2 className="text-xl md:text-2xl lg:text-3xl font-semibold text-secondary mb-6 italic">
-            Khu nhà vườn sinh thái tiêu chuẩn
+            Eco-friendly garden villa complex with premium standards
           </h2>
 
           <p className="text-background/90 text-base md:text-lg leading-relaxed mb-10 max-w-2xl text-pretty">
-            Sự xuất hiện của chúng tôi tại khu vực sẽ tiên phong cho xu hướng Second Home, 
-            kiến tạo trở thành không gian sống lí tưởng, cho phép chủ nhân tận hưởng 
-            không khí xanh, bền vững an cư và đầu tư cho tương lai.
+            Our presence in this area pioneers the Second Home trend, 
+            creating an ideal living space that allows homeowners to enjoy 
+            fresh air, sustainable living, and investment opportunities for the future.
           </p>
 
           <div className="bg-background/10 backdrop-blur-md border border-background/20 rounded-lg p-6 mb-8 max-w-md shadow-2xl">
-            <h3 className="text-background font-semibold text-lg mb-4 border-b border-background/20 pb-2">Thông tin tổng quan</h3>
+            <h3 className="text-background font-semibold text-lg mb-4 border-b border-background/20 pb-2">General Information</h3>
             <ul className="space-y-3 text-background/90 text-sm">
               <li className="flex gap-2">
                 <span className="text-secondary font-bold">•</span> 
-                <span><strong>Vị trí:</strong> {biz.address || "Đang cập nhật"}</span>
+                <span><strong>Location:</strong> {biz.address || "Updating"}</span>
               </li>
               <li className="flex gap-2">
                 <span className="text-secondary font-bold">•</span> 
-                <span><strong>Đơn vị:</strong> {companyName}</span>
+                <span><strong>Developer:</strong> {companyName}</span>
               </li>
               <li className="flex gap-2">
                 <span className="text-secondary font-bold">•</span> 
-                <span><strong>Hotline:</strong> {biz.phone || "Liên hệ trực tiếp"}</span>
+                <span><strong>Hotline:</strong> {biz.phone || "Contact directly"}</span>
               </li>
               <li className="flex gap-2">
                 <span className="text-secondary font-bold">•</span> 
-                <span><strong>Pháp lý:</strong> {biz.document || "Đang xác minh"} (Sổ hồng sẵn)</span>
+                <span><strong>Legal:</strong> {biz.document || "Under verification"} (Title deed ready)</span>
               </li>
             </ul>
           </div>
@@ -79,7 +79,7 @@ export function HeroSection({ biz }: BizProps) {
             size="lg"
             className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold px-10 py-7 text-lg shadow-lg hover:scale-105 transition-transform"
           >
-            NHẬN BÁO GIÁ NGAY
+            GET QUOTE NOW
           </Button>
         </div>
       </div>

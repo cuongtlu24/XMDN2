@@ -3,15 +3,15 @@ import { MapPin, TreePine, Home } from "lucide-react"
 const amenities = [
   {
     icon: MapPin,
-    title: "Hệ thống giao thông đồng bộ",
+    title: "Synchronized transportation system",
   },
   {
     icon: TreePine,
-    title: "Khu du lịch",
+    title: "Tourism area",
   },
   {
     icon: Home,
-    title: "Khu dân cư",
+    title: "Residential area",
   },
 ]
 
@@ -23,16 +23,16 @@ export function AmenitiesSection({ biz }: { biz: any }) {
           {/* Content */}
           <div>
             <div className="mb-8">
-              <h3 className="text-secondary font-bold text-lg mb-2 uppercase">TIỆN ÍCH NGOẠI KHU</h3>
+              <h3 className="text-secondary font-bold text-lg mb-2 uppercase">EXTERNAL AMENITIES</h3>
               <h2 className="text-3xl md:text-4xl font-bold uppercase">
-                ĐÁP ỨNG<br />ĐẦY ĐỦ
+                FULLY<br />EQUIPPED
               </h2>
             </div>
 
             <p className="text-primary-foreground/90 leading-relaxed mb-8">
-              Nằm trong khu dân cư hiện hữu tại <strong>{biz.address}</strong>, <strong>{biz.name}</strong> chính là kết tinh hoàn hảo khi 
-              các tiện ích ngoại khu: trường học, ngân hàng, bến xe, khu du lịch, siêu thị, 
-              chợ… đều có sẵn và liền kề khu vực, đáp ứng được tối đa nhu cầu an cư và đầu tư.
+              Located in an established residential area at <strong>{biz.address}</strong>, <strong>{biz.name}</strong> is the perfect embodiment when 
+              external amenities such as schools, banks, bus stations, tourist areas, supermarkets, 
+              markets... are all readily available and adjacent to the area, maximally meeting residential and investment needs.
             </p>
 
             <div className="grid grid-cols-3 gap-4">
@@ -50,14 +50,14 @@ export function AmenitiesSection({ biz }: { biz: any }) {
           {/* Map/Location Image */}
           <div className="relative">
             <img 
-              // Bạn có thể dùng ảnh bản đồ cố định hoặc dùng ảnh từ Sheets nếu cột F là ảnh bản đồ
+              // You can use a fixed map image or use image from Sheets if column F is a map image
               src={biz.image || "/images/location-map.jpg"} 
-              alt={`Vị trí ${biz.name}`}
+              alt={`Location of ${biz.name}`}
               className="w-full h-[400px] lg:h-[500px] object-cover rounded-lg shadow-2xl border-4 border-primary-foreground/10"
             />
-            {/* Overlay nhãn vị trí */}
+            {/* Location Label Overlay */}
             <div className="absolute top-4 left-4 bg-secondary text-secondary-foreground px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-              VỊ TRÍ CHIẾN LƯỢC
+              STRATEGIC LOCATION
             </div>
           </div>
         </div>

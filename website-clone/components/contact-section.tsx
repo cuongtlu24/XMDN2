@@ -28,32 +28,32 @@ export function ContactSection() {
           {/* Left Column - Text */}
           <div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Đầu tư <span className="text-secondary">ĐẮT GIÁ</span>
+              <span className="text-secondary">VALUABLE</span> Investment
             </h2>
             <h3 className="text-2xl md:text-3xl font-bold mb-8">
-              Đầu tư <span className="text-secondary">AN NHIÊN</span>
+              <span className="text-secondary">SECURE</span> Investment
             </h3>
 
             <div className="space-y-4 text-background/80 text-sm leading-relaxed">
               <p>
-                Xin chân thành cám ơn Quý khách đã quan tâm đến dự án. Để biết thêm thông tin 
-                chi tiết, Quý khách vui lòng liên hệ trực tiếp với chúng tôi, hoặc để lại thông 
-                tin theo mẫu bên dưới. Chúng tôi sẽ hồi âm trong thời gian sớm nhất.
+                Thank you for your interest in our project. For more detailed information, 
+                please contact us directly or leave your information in the form below. 
+                We will respond as soon as possible.
               </p>
               <p className="text-xs text-background/60">
-                Chúng tôi đặc biệt cẩn trọng trong việc chuẩn bị các nội dung trên website này. 
-                Mọi thông tin/hình ảnh/bản vẽ chỉ thể hiện thông số kỹ thuật, tính thẩm mỹ và 
-                sự sáng tạo tại thời điểm được đăng tải, đồng thời mang tính chất tham khảo và 
-                không đại diện chính xác cho điều kiện xây dựng thực tế, cũng như không mang 
-                tính đại diện hay là một phần của hợp đồng.
+                We are particularly careful in preparing the content on this website. 
+                All information/images/drawings only represent technical specifications, aesthetics, 
+                and creativity at the time of posting, and are for reference purposes only 
+                and do not accurately represent actual construction conditions, nor are they 
+                representative or part of the contract.
               </p>
             </div>
           </div>
 
           {/* Right Column - Form */}
           <div className="bg-background/10 backdrop-blur-sm border border-background/20 rounded-lg p-8">
-            <h3 className="text-xl font-bold mb-2">ĐĂNG KÝ</h3>
-            <h4 className="text-lg font-semibold text-secondary mb-6">NHẬN THÔNG TIN</h4>
+            <h3 className="text-xl font-bold mb-2">REGISTER</h3>
+            <h4 className="text-lg font-semibold text-secondary mb-6">GET INFORMATION</h4>
 
             {submitted ? (
               <div className="text-center py-8">
@@ -78,7 +78,7 @@ export function ContactSection() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
                   type="text"
-                  placeholder="Họ và tên"
+                  placeholder="Full Name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -86,7 +86,7 @@ export function ContactSection() {
                 />
                 <Input
                   type="tel"
-                  placeholder="Số điện thoại"
+                  placeholder="Phone Number"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   required
@@ -104,7 +104,7 @@ export function ContactSection() {
                   type="submit"
                   className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold"
                 >
-                  GỬI
+                  SUBMIT
                 </Button>
               </form>
             )}

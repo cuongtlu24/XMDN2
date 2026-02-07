@@ -5,12 +5,12 @@ import { Menu, X, PhoneCall } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const navItems = [
-  { label: "TRANG CHỦ", href: "#home" },
-  { label: "TỔNG QUAN", href: "#overview" },
-  { label: "VỊ TRÍ", href: "#amenities" }, // Khớp với ID của AmenitiesSection
-  { label: "GIÁ TRỊ", href: "#investment" },
-  { label: "PHÁP LÝ", href: "#legal" },
-  { label: "LIÊN HỆ", href: "#contact" },
+  { label: "HOME", href: "#home" },
+  { label: "OVERVIEW", href: "#overview" },
+  { label: "LOCATION", href: "#amenities" }, // Matches AmenitiesSection ID
+  { label: "VALUE", href: "#investment" },
+  { label: "LEGAL", href: "#legal" },
+  { label: "CONTACT", href: "#contact" },
 ]
 
 export function Header({ biz }: { biz: any }) {
@@ -20,14 +20,14 @@ export function Header({ biz }: { biz: any }) {
     <header className="fixed top-0 left-0 right-0 z-50 bg-foreground/95 backdrop-blur-md border-b border-background/10">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          {/* Logo/Brand Name lấy từ Sheets */}
+          {/* Logo/Brand Name from Sheets */}
          <a href="#home" className="flex flex-col">
-    {/* Tên công ty: To và nổi bật */}
+    {/* Company name: Large and prominent */}
     <span className="text-secondary font-black text-xl md:text-2xl tracking-tighter leading-none ">
       {biz.name}
     </span>
     
-    {/* Mã tài liệu: Hiển thị ngay dưới tên công ty, màu vàng nhẹ để phân biệt */}
+    {/* Document code: Display right below company name, light yellow to differentiate */}
     <span className="text-secondary/80 text-[11px] font-bold tracking-widest mt-1">
       {biz.document}
     </span>
@@ -60,7 +60,7 @@ export function Header({ biz }: { biz: any }) {
             <Button 
               className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold px-6 rounded-full shadow-lg"
             >
-              ĐĂNG KÝ NGAY
+              REGISTER NOW
             </Button>
           </nav>
 
@@ -96,7 +96,7 @@ export function Header({ biz }: { biz: any }) {
                 <Button 
                   className="bg-secondary hover:bg-secondary/90 text-secondary-foreground font-black py-6 rounded-lg uppercase"
                 >
-                  NHẬN THÔNG TIN DỰ ÁN
+                  GET PROJECT INFO
                 </Button>
               </div>
             </div>

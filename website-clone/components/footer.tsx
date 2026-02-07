@@ -3,7 +3,7 @@ import { Phone, MapPin, FileText, Globe, ShieldCheck, Mail } from "lucide-react"
 export function Footer({ biz }: { biz: any }) {
   const currentYear = new Date().getFullYear();
 
-  // ✅ domain thật đang chạy (vd: 10thhouselegacyinc.bmverification.com)
+  // ✅ actual running domain (e.g.: 10thhouselegacyinc.bmverification.com)
   const showDomain = (biz?.host || "").toString().trim() || "";
 
   return (
@@ -13,7 +13,7 @@ export function Footer({ biz }: { biz: any }) {
           <div className="space-y-8">
             <div>
               <h3 className="text-xl font-bold mb-4 uppercase tracking-wider text-secondary/80">
-                Thông tin liên hệ
+                Contact Information
               </h3>
               <h4 className="text-3xl md:text-4xl font-black text-secondary mb-2 leading-tight">
                 {biz.name}
@@ -54,7 +54,7 @@ export function Footer({ biz }: { biz: any }) {
                   <MapPin className="w-5 h-5 text-secondary" />
                 </div>
                 <span className="text-lg font-medium leading-snug text-background/90">
-                  Địa chỉ: {biz.address}
+                  Address: {biz.address}
                 </span>
               </div>
 
@@ -64,15 +64,15 @@ export function Footer({ biz }: { biz: any }) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-black text-secondary tracking-[0.2em]">
-                    Hồ sơ pháp lý
+                    Legal Documentation
                   </span>
                   <span className="text-xl font-black text-secondary tracking-wider">
-                    Mã tài liệu: {biz.document}
+                    Document Code: {biz.document}
                   </span>
                 </div>
               </div>
 
-              {/* ✅ DOMAIN ĐÚNG */}
+              {/* ✅ CORRECT DOMAIN */}
               {!!showDomain && (
                 <div className="flex items-center gap-4 group opacity-70">
                   <div className="w-10 h-10 rounded-xl bg-background/5 flex items-center justify-center shrink-0">
@@ -88,16 +88,16 @@ export function Footer({ biz }: { biz: any }) {
 
           <div className="flex flex-col items-center justify-center text-center lg:pt-10">
             <h3 className="text-2xl font-black mb-8 uppercase tracking-[0.2em] text-secondary">
-              Danh mục
+              Menu
             </h3>
             <ul className="space-y-4">
               {[
-                { label: "Trang chủ", href: "#home" },
-                { label: "Tổng quan dự án", href: "#overview" },
-                { label: "Tiện ích khu vực", href: "#amenities" },
-                { label: "Giá trị đầu tư", href: "#investment" },
-                { label: "Pháp lý minh bạch", href: "#legal" },
-                { label: "Liên hệ tư vấn", href: "#contact" },
+                { label: "Home", href: "#home" },
+                { label: "Project Overview", href: "#overview" },
+                { label: "Area Amenities", href: "#amenities" },
+                { label: "Investment Value", href: "#investment" },
+                { label: "Transparent Legal", href: "#legal" },
+                { label: "Contact Consultation", href: "#contact" },
               ].map((link) => (
                 <li key={link.href}>
                   <a
@@ -113,12 +113,12 @@ export function Footer({ biz }: { biz: any }) {
 
           <div className="bg-secondary/5 p-8 rounded-3xl border border-secondary/20 shadow-xl relative overflow-hidden">
             <h3 className="text-xl font-black mb-6 uppercase tracking-[0.2em] text-secondary border-b border-secondary/20 pb-2 inline-block">
-              Cam kết dịch vụ
+              Service Commitment
             </h3>
 
             <p className="text-xl md:text-2xl leading-relaxed font-bold italic mb-8 text-background/90">
-              "{biz.name} tự hào là đơn vị cung cấp các sản phẩm bất động sản vườn sinh thái với pháp lý minh bạch,
-              sổ hồng riêng từng nền, hỗ trợ khách hàng tối đa trong quá trình giao dịch."
+              "{biz.name} is proud to be a provider of eco-garden real estate products with transparent legal documentation,
+              individual title deeds for each lot, and maximum support to customers throughout the transaction process."
             </p>
 
             <div className="pt-6 border-t border-secondary/30">
@@ -132,7 +132,7 @@ export function Footer({ biz }: { biz: any }) {
                 </p>
               </div>
               <p className="text-[10px] uppercase tracking-[0.3em] text-secondary/50 mt-3 font-bold ml-12">
-                Hệ thống xác thực dữ liệu thời gian thực
+                Real-time data verification system
               </p>
             </div>
 
@@ -145,7 +145,7 @@ export function Footer({ biz }: { biz: any }) {
             © {currentYear} {biz.name}. All rights reserved.
           </p>
           <p className="flex items-center gap-2">
-            <span>Phát triển bởi</span>
+            <span>Developed by</span>
             <span className="text-secondary hover:text-white transition-colors duration-300">
               {biz.name}
             </span>

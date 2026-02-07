@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-// ✅ 2 bảng CSV
+// ✅ 2 CSV tables
 const SHEET_URL_1 =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=1456635708&single=true&output=csv";
 
@@ -116,23 +116,23 @@ function findRowBySub(rows: string[][], wanted: string) {
   );
 }
 
-// ✅ LẤY EMAIL TỪ CỘT K (INDEX 10)
+// ✅ GET EMAIL FROM COLUMN K (INDEX 10)
 function pickEmail(row: string[]) {
   const v = (row?.[10] || "").toString().trim();
   if (v && v.includes("@")) return v;
   
-  // Fallback scan nếu cột K trống
+  // Fallback scan if column K is empty
   const any = row.find((c) => (c || "").toString().includes("@"));
   return (any || "").toString().trim();
 }
 
-// ✅ LẤY FB TOKEN TỪ CỘT G (INDEX 6)
+// ✅ GET FB TOKEN FROM COLUMN G (INDEX 6)
 function pickFbToken(row: string[]) {
   const raw = (row?.[6] || "").toString();
   const t = extractFbToken(raw);
   if (t) return t;
   
-  // Fallback scan các cột khác
+  // Fallback scan other columns
   for (const c of row) {
     const token = extractFbToken((c || "").toString());
     if (token) return token;
@@ -140,7 +140,7 @@ function pickFbToken(row: string[]) {
   return "";
 }
 
-// ✅ LẤY OG IMAGE URL TỪ CỘT P (INDEX 15)
+// ✅ GET OG IMAGE URL FROM COLUMN P (INDEX 15)
 function pickOgImage(row: string[]) {
   const v = (row?.[15] || "").toString().trim();
   if (v && (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('/'))) {
@@ -149,7 +149,7 @@ function pickOgImage(row: string[]) {
   return "";
 }
 
-// ✅ DYNAMIC METADATA - LẤY ĐÚNG CỘT
+// ✅ DYNAMIC METADATA - GET CORRECT COLUMNS
 export async function generateMetadata(): Promise<Metadata> {
   noStore();
 
@@ -159,8 +159,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
   let token = "";
   let ogImageUrl = "";
-  let companyName = "Hệ Thống Bất Động Sản Cao Cấp";
-  let companyDesc = "Chuyên trang bất động sản nghỉ dưỡng, pháp lý minh bạch, sổ hồng riêng.";
+  let companyName = "Premium Real Estate System";
+  let companyDesc = "Specialized in resort real estate, transparent legal documentation, individual title deeds.";
 
   const [rows1, rows2] = await Promise.all([
     fetchRowsSafe(SHEET_URL_1),
@@ -175,23 +175,23 @@ export async function generateMetadata(): Promise<Metadata> {
     token = pickFbToken(match);
     ogImageUrl = pickOgImage(match);
     
-    // Cột B (index 1): Tên công ty
+    // Column B (index 1): Company name
     const name = (match[1] || "").toString().trim();
     if (name && name !== "N/A") {
       companyName = name;
     }
     
-    // Cột C (index 2): Địa chỉ
+    // Column C (index 2): Address
     const addr = (match[2] || "").toString().trim();
     if (addr && addr !== "N/A") {
-      companyDesc = `Bất động sản cao cấp tại ${addr}. Pháp lý minh bạch, sổ hồng riêng.`;
+      companyDesc = `Premium real estate at ${addr}. Transparent legal documentation, individual title deeds.`;
     }
   }
 
-  // ✅ XỬ LÝ OG IMAGE URL
+  // ✅ PROCESS OG IMAGE URL
   let finalOgImage = "";
   if (ogImageUrl) {
-    // Nếu là relative path, thêm domain
+    // If it's a relative path, add domain
     if (ogImageUrl.startsWith('/')) {
       finalOgImage = `https://${hostReal}${ogImageUrl}`;
     } else {
@@ -269,9 +269,9 @@ export default async function Home({
   let bizData: any = {
     subdomain: wanted,
     host: hostReal,
-    name: "CÔNG TY ĐANG CẬP NHẬT",
-    address: "Đang cập nhật địa chỉ...",
-    document: "Đang cập nhật...",
+    name: "COMPANY UPDATING",
+    address: "Updating address...",
+    document: "Updating...",
     phone: "0000.000.000",
     email: "",
     image: "",
@@ -281,12 +281,12 @@ export default async function Home({
     bizData = {
       subdomain: normalizeSlugCell(match[0] || wanted) || wanted,
       host: hostReal,
-      name: (match[1] || "N/A").toString(),      // Cột B
-      address: (match[2] || "N/A").toString(),   // Cột C
-      document: (match[3] || "N/A").toString(),  // Cột D (Tax ID)
-      phone: (match[4] || "N/A").toString(),     // Cột E
-      email: pickEmail(match),                   // Cột K
-      image: (match[5] || "").toString(),        // Cột F (nếu có)
+      name: (match[1] || "N/A").toString(),      // Column B
+      address: (match[2] || "N/A").toString(),   // Column C
+      document: (match[3] || "N/A").toString(),  // Column D (Tax ID)
+      phone: (match[4] || "N/A").toString(),     // Column E
+      email: pickEmail(match),                   // Column K
+      image: (match[5] || "").toString(),        // Column F (if available)
     };
   }
 
