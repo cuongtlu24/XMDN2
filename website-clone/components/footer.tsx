@@ -56,9 +56,10 @@ export function Footer({ biz }: { biz: any }) {
                 <div className="w-10 h-10 rounded-xl bg-background/5 flex items-center justify-center shrink-0">
                   <Globe className="w-5 h-5 text-secondary" />
                 </div>
-                <span className="text-sm font-medium italic underline underline-offset-4 decoration-secondary/30">
-                  {biz.subdomain}.constructionxuandinh.sbs
-                </span>
+               <span className="text-sm font-medium italic underline underline-offset-4 decoration-secondary/30">
+  {biz.domain || biz.subdomain}
+</span>
+
               </div>
             </div>
           </div>
