@@ -16,13 +16,15 @@ export const viewport: Viewport = {
   themeColor: '#052c24',
 }
 
+// ✅ METADATA GENERIC - Dynamic metadata sẽ ở page.tsx
 export const metadata: Metadata = {
   title: {
     template: '%s | Hệ Thống BĐS', 
     default: 'Hệ Thống Bất Động Sản Cao Cấp', 
   },
   description: 'Chuyên trang bất động sản nghỉ dưỡng, pháp lý minh bạch, sổ hồng riêng.',
-  generator: 'constructionxuandinh.sbs', 
+  generator: 'constructionxuandinh.sbs',
+  
   icons: {
     icon: [
       { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
@@ -30,6 +32,19 @@ export const metadata: Metadata = {
       { url: '/icon.svg', type: 'image/svg+xml' },
     ],
     apple: '/apple-icon.png',
+  },
+  
+  // ✅ ROBOTS META (generic cho tất cả trang)
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 }
 
