@@ -1,16 +1,18 @@
-// app/page.tsx
+
 import LandingClient from "./LandingClient";
 import { unstable_noStore as noStore } from "next/cache";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 
-
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?output=csv";
+// ✅ 2 bảng CSV (2 link bạn đưa)
+const SHEET_URLS = [
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?gid=1456635708&single=true&output=csv",
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQmi6oayoemKBJXEWi4pkVHDsm166ap0XCwbopYrukBQnwj2gERseGlDnJVBrtciHwKEFj5bTqFLGiQ/pub?output=csv",
+];
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -18,7 +20,7 @@ function parseCsv(text: string) {
   const lines = (text || "")
     .replace(/\r/g, "")
     .split("\n")
-    .filter((l) => l.trim() !== "");
+    .filter((l) => l !== ""); // ✅ không trim để giữ đúng dữ liệu cell
 
   return lines.map((line) => {
     const result: string[] = [];
@@ -39,14 +41,14 @@ function parseCsv(text: string) {
       }
 
       if (ch === "," && !inQuotes) {
-        result.push(cell.trim());
+        result.push(cell); // ✅ giữ nguyên, không trim
         cell = "";
       } else {
         cell += ch;
       }
     }
 
-    result.push(cell.trim());
+    result.push(cell); // ✅ giữ nguyên, không trim
     return result;
   });
 }
@@ -73,6 +75,7 @@ function subFromHost(host: string) {
   }
   return "";
 }
+
 function extractFbToken(raw: string) {
   const s = (raw || "").trim();
 
@@ -90,17 +93,40 @@ function extractFbToken(raw: string) {
   return "";
 }
 
-async function fetchRows() {
-  const res = await fetch(SHEET_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Fetch CSV failed: ${res.status}`);
+async function fetchRowsFrom(url: string) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Fetch CSV failed: ${res.status} (${url})`);
   const text = await res.text();
   return parseCsv(text);
+}
+
+// ✅ gộp 2 bảng: bỏ header trùng của bảng thứ 2 (nếu có)
+async function fetchRowsMerged() {
+  const [rows1, rows2] = await Promise.all([
+    fetchRowsFrom(SHEET_URLS[0]),
+    fetchRowsFrom(SHEET_URLS[1]),
+  ]);
+
+  const head1 = (rows1?.[0] || []).map((x) => norm(String(x)));
+  const head2 = (rows2?.[0] || []).map((x) => norm(String(x)));
+  const headerSame =
+    head1.length > 0 &&
+    head1.length === head2.length &&
+    head1.every((v, i) => v === head2[i]);
+
+  const rows2NoHeader = headerSame ? rows2.slice(1) : rows2;
+
+  // ✅ lọc dòng rỗng
+  const merged = [...rows1, ...rows2NoHeader].filter((r) =>
+    (r || []).some((c) => String(c || "").trim() !== "")
+  );
+
+  return merged;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
   noStore();
 
-  // ưu tiên host thật
   const h = await headers();
   const hostReal = h.get("host") || "";
   const wanted = norm(subFromHost(hostReal));
@@ -109,13 +135,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
   try {
     if (wanted) {
-      const rows = await fetchRows();
-      const match = rows.find(
-        (r) => normalizeSlugCell(r?.[0] || "") === wanted
-      );
+      const rows = await fetchRowsMerged();
+      const match = rows.find((r) => normalizeSlugCell(r?.[0] || "") === wanted);
 
-      // ✅ Cột G = index 6 (token)
-      const rawG = (match?.[6] || "").toString();
+      // ⚠️ giữ nguyên mapping như code cũ của bạn:
+      // "token" đang lấy ở index 6 (cột G). Nếu token của bạn nằm cột H thì đổi 6 -> 7.
+      const rawG = (match?.[6] ?? "").toString();
       token = extractFbToken(rawG);
     }
   } catch {
@@ -127,11 +152,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-
 export default async function Home({
   searchParams,
 }: {
-  // ✅ Next 15: searchParams là Promise
   searchParams: Promise<SearchParams>;
 }) {
   noStore();
@@ -156,26 +179,22 @@ export default async function Home({
   let debugFirstSlugs: string[] = [];
 
   try {
-  const rows = await fetchRows();
+    const rows = await fetchRowsMerged();
 
-
-    // debug 8 dòng đầu
     debugFirstSlugs = rows.slice(0, 8).map((r) => (r?.[0] || "").toString());
 
     if (wanted) {
-      const match = rows.find(
-        (r) => normalizeSlugCell(r?.[0] || "") === wanted
-      );
+      const match = rows.find((r) => normalizeSlugCell(r?.[0] || "") === wanted);
 
       if (match) {
+        // ✅ giữ nguyên đúng hoa/thường theo sheet (không toUpperCase/trim)
         bizData = {
-          subdomain: match[0] || wanted,
-          name: match[1] || "N/A",
-          address: match[2] || "N/A",
-          document: match[3] || "N/A",
-          phone: match[4] || "N/A",
-          image: match[5] || "",
-          
+          subdomain: (match[0] ?? wanted).toString(),
+          name: (match[1] ?? "N/A").toString(),
+          address: (match[2] ?? "N/A").toString(),
+          document: (match[3] ?? "N/A").toString(),
+          phone: (match[4] ?? "N/A").toString(),
+          image: (match[5] ?? "").toString(),
         };
       }
     }
